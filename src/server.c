@@ -50,13 +50,31 @@ int main() {
 	int id = msgget(key, IPC_CREAT | 0640);
 	if(id == -1) perror("msgget error");
 
+	int del;
+
 	key = KEYP1;
-	int idP1 = msgget(key, IPC_CREAT | 0640);
-	if(idP1 == -1) perror("msgget error");
+	int idP1 = msgget(key, 0640);
+	if(idP1 == -1) {
+		idP1 = msgget(key, IPC_CREAT | 0640);
+		if(idP1 == -1) perror("msgget error");
+	}
+	else {
+		del = msgctl(idP1, IPC_RMID, 0);
+		if(del == -1) perror("msgctl error");
+		idP1 = msgget(key, IPC_CREAT | 0640);
+	}
 
 	key = KEYP2;
-	int idP2 = msgget(key, IPC_CREAT | 0640);
-	if(idP2 == -1) perror("msgget error");
+	int idP2 = msgget(key, 0640);
+	if(idP2 == -1) {
+		idP2 = msgget(key, IPC_CREAT | 0640);
+		if(idP2 == -1) perror("msgget error");
+	}
+	else {
+		del = msgctl(idP2, IPC_RMID, 0);
+		if(del == -1) perror("msgctl error");
+		idP2 = msgget(key, IPC_CREAT | 0640);
+	}
 
 	Init init;
 	int i;
@@ -78,7 +96,7 @@ int main() {
 
 			i = msgsnd(id, &init, sizeof(init.nextMsg), IPC_NOWAIT);
 			if(i == -1) perror("msgsnd error");
-			else printf("Init #%d sent back\n", initNr);
+			else printf("Init #%d sent back. Key = %d\n", initNr, init.nextMsg);
 
 			initNr++;
 		}
@@ -92,6 +110,11 @@ int main() {
 	if(i == -1) perror("msgsnd error");
 	else printf("Update sent to player #1\n");
 
+	state->resources[1] = 300;
+	data = sendGameState(state, 1);
+	i = msgsnd(idP2, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
+	if(i == -1) perror("msgsnd error");
+	else printf("Update sent to player #2\n");
 
 
 	sleep(3);

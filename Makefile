@@ -14,3 +14,5 @@ out/%.out: src/%.c
 	$(CC) $(CFLAGS) -I./src/headers/ $< -o $@
 	@echo "Brawo! Kompilacja $< udana :)"
 
+clean:
+	rm -f ./out/*
