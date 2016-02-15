@@ -5,8 +5,10 @@
 #include <sys/msg.h>
 #include <sys/shm.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 
 #define KEYP1 31415926 
 #define KEYP2 11111111 
@@ -38,7 +40,15 @@ Data sendGameState(State* state, int player) {
 	return data;
 }
 
+void f() {
+	printf("Signal handling\n");
+
+	exit(0);
+}
+
 int main() {
+	
+	signal(SIGINT, f);
 	
 	/* Creating type State* shared memory */
 	State* state;
