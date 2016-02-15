@@ -12,6 +12,10 @@ void printGameState(Data data) {
 							data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources, data.info, data.end);
 }
 
+void clear() {
+	printf("\033[H\033[J");
+}
+
 int main() {
 
 	key_t key = KEY;
@@ -46,6 +50,13 @@ int main() {
 	if(i == -1) perror("msgrcv error");
 	else printf("Update received\n");
 	printGameState(data);
+
+	/* Printing game state with terminal clearing */
+	while(1) {
+		sleep(1);
+		clear();
+		printGameState(data);
+	}
 
 	char c;
 	int j = 0;
