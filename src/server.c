@@ -1,4 +1,4 @@
-#include "struct.h"
+#include "headers/struct.h"
 
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -122,7 +122,7 @@ int main() {
 	else printf("Update sent to player #2\n");
 
 
-	sleep(3);
+	sleep(5);
 
 	/* Destruction */
 	int destructor = msgctl(id, IPC_RMID, 0);

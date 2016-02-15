@@ -1,0 +1,2 @@
+gcc -g -Wall src/player.c src/keyHandling.c -o out/player.out
+gcc -g -Wall src/server.c -o out/server.out

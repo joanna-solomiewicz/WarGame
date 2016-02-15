@@ -1,4 +1,4 @@
-make
+./compileScript
 guake --new-tab="/home/joanna/Dokumenty/Projekty/WarGame/out/" --execute-command="./player.out"
 guake --new-tab="/home/joanna/Dokumenty/Projekty/WarGame/out/" --execute-command="./player.out"
 guake --new-tab="/home/joanna/Dokumenty/Projekty/WarGame/out/" --execute-command="./server.out"

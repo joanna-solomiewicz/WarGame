@@ -1,13 +1,10 @@
+#include "headers/keyHandling.h"
+
 #include <sys/select.h>
 #include <unistd.h>
 #include <termios.h>
 #include <string.h>
 #include <stdio.h>
-
-#include "keyHandling.h"
-
-#define NB_ENABLE 0
-#define NB_DISABLE 1
 
 int kbhit() {
 	struct timeval tv;

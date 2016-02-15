@@ -1,4 +1,5 @@
-#include "struct.h"
+#include "headers/struct.h"
+#include "headers/keyHandling.h"
 
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -45,4 +46,16 @@ int main() {
 	if(i == -1) perror("msgrcv error");
 	else printf("Update received\n");
 	printGameState(data);
+
+	char c;
+	int j = 0;
+	nonblock(NB_ENABLE);
+	while( !j ) {
+		if( kbhit() ) {
+			c = getchar();
+			if( c == 'q' ) j = 1;
+			printf("%c\n", c);
+		}
+	}
+	nonblock(NB_DISABLE);
 }
