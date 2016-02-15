@@ -1,0 +1,4 @@
+make
+guake --new-tab="/home/joanna/Dokumenty/Projekty/WarGame/out/" --execute-command="./player1.out"
+guake --new-tab="/home/joanna/Dokumenty/Projekty/WarGame/out/" --execute-command="./player2.out"
+guake --new-tab="/home/joanna/Dokumenty/Projekty/WarGame/out/" --execute-command="./server.out"
