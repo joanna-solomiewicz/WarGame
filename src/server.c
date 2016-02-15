@@ -24,6 +24,14 @@ typedef struct State {
 	char end;
 } State;
 
+typedef struct QueueId {
+	int initialQ;
+	int player1Q;
+	int player2Q;
+} QueueId;
+
+QueueId* queueIdList;
+
 Data sendGameState(State* state, int player) {
 	Data data;
 	if(!player) data.mtype = KEYP1;
@@ -43,12 +51,17 @@ Data sendGameState(State* state, int player) {
 void f() {
 	printf("Signal handling\n");
 
+	Init init;
+	init.mtype = 4;
+	init.nextMsg = KEYP1;
+	int i = msgsnd(queueIdList->initialQ, &init, sizeof(init.nextMsg), IPC_NOWAIT);
+	if(i == -1) perror("msgsnd error");
+	else printf("I've been killed !\n");
+
 	exit(0);
 }
 
 int main() {
-	
-	signal(SIGINT, f);
 	
 	/* Creating type State* shared memory */
 	State* state;
@@ -89,6 +102,17 @@ int main() {
 		if(del == -1) perror("msgctl error");
 		idP2 = msgget(key, IPC_CREAT | 0640);
 	}
+
+	/* Creating type QueueId* shared memory */
+	key = 69;
+	shmid = shmget(key, sizeof(State), IPC_CREAT | 0640);
+	if(shmid == -1) perror("shmget error");
+	queueIdList = (QueueId*)shmat(shmid, NULL, 0);
+	queueIdList->initialQ = id;
+	queueIdList->player1Q = idP1;
+	queueIdList->player2Q = idP2;
+	
+	signal(SIGINT, f);
 
 	/* Sending private queues' keys to players*/
 	Init init;
@@ -132,7 +156,7 @@ int main() {
 	else printf("Update sent to player #2\n");
 
 
-	sleep(3);
+	sleep(5);
 
 	/* Destruction */
 	int destructor = msgctl(id, IPC_RMID, 0);
