@@ -7,42 +7,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
-void clear() { printf("\033[H\033[J"); }
-
-void printGameState(Data data) {
-	printf("Game state:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n\tworkers: %d\n\tpoints: %d\n\tresources: %d\n\tinfo: %s\n\tend: %c\n", 
-							data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources, data.info, data.end);
-}
-
-void printMenu() { printf("[1] BUILD [2] ATTACK\n"); }
-
-void building(Data data) { 
-	clear();
-	printGameState(data);
-	printMenu();
-	printf("What do You want to build? [1] LIGHT [2] HEAVY [3] CAVALRY [4] WORKERS [5] NOTHING, hit the wrong button\n");
-	int stop = 1;
-	while(stop) {
-		char c;
-		c = getchar();
-		if( c >= '0' && c <= '4') {
-			printf("How many? (0-9)\n");
-			while(stop) {
-				if( kbhit() ) {
-					c = getchar();
-					if(c >= '0' && c <= '9') { stop = 0; }
-				}
-			}
-		}
-		else if( c == '5' ) { stop = 0; }
-
-		clear();
-		printGameState(data);
-		printMenu();
-
-		usleep(1);
-	}
-}
+void clear();
+void printGameState(Data data);
+void printMenu();
+void building(Data data);
 
 int main() {
 
@@ -101,4 +69,41 @@ int main() {
 	}
 
 	nonblock(NB_DISABLE);
+}
+
+void clear() { printf("\033[H\033[J"); }
+
+void printGameState(Data data) {
+	printf("Game state:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n\tworkers: %d\n\tpoints: %d\n\tresources: %d\n\tinfo: %s\n\tend: %c\n", 
+							data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources, data.info, data.end);
+}
+
+void printMenu() { printf("[1] BUILD [2] ATTACK\n"); }
+
+void building(Data data) { 
+	clear();
+	printGameState(data);
+	printMenu();
+	printf("What do You want to build? [1] LIGHT [2] HEAVY [3] CAVALRY [4] WORKERS [5] NOTHING, hit the wrong button\n");
+	int stop = 1;
+	while(stop) {
+		char c;
+		c = getchar();
+		if( c >= '0' && c <= '4') {
+			printf("How many? (0-9)\n");
+			while(stop) {
+				if( kbhit() ) {
+					c = getchar();
+					if(c >= '0' && c <= '9') { stop = 0; }
+				}
+			}
+		}
+		else if( c == '5' ) { stop = 0; }
+
+		clear();
+		printGameState(data);
+		printMenu();
+
+		usleep(1);
+	}
 }
