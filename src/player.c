@@ -11,6 +11,7 @@ void clear();
 void printGameState(Data data);
 void printMenu();
 void building(Data data);
+void update(Data data);
 
 int main() {
 
@@ -54,6 +55,9 @@ int main() {
 	printGameState(data);
 	printMenu();
 	while(1) {
+		i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
+		if(i == -1) perror("msgrcv error");
+		else update(data);
 		char c;
 		if( kbhit() ) {
 			c = getchar();
@@ -106,4 +110,10 @@ void building(Data data) {
 
 		usleep(1);
 	}
+}
+
+void update(Data data) {
+	clear();
+	printGameState(data);
+	printMenu();
 }
