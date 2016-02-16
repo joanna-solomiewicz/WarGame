@@ -83,20 +83,25 @@ void printMenu() { printf("[1] BUILD [2] ATTACK\n"); }
 void building(Data data) { 
 	clear();
 	printGameState(data);
-	printMenu();
 	printf("What do You want to build? [1] LIGHT [2] HEAVY [3] CAVALRY [4] WORKERS [5] NOTHING, hit the wrong button\n");
 	int stop = 1;
 	while(stop) {
 		char c;
+		int nr;
 		c = getchar();
 		if( c >= '0' && c <= '4') {
-			printf("How many? (0-9)\n");
-			while(stop) {
-				if( kbhit() ) {
-					c = getchar();
-					if(c >= '0' && c <= '9') { stop = 0; }
-				}
-			}
+			printf("How many? [ENTER] Confirm\n");
+			nonblock(NB_DISABLE);
+			printf("~~Type a magical, invisible number~~\n");
+			scanf("%d", &nr);
+			nonblock(NB_ENABLE);
+			stop = 0;
+//			while(stop) {
+//				if( kbhit() ) {
+//					c = getchar();
+//					if((int)c == 13) { stop = 0; }
+//				}
+//			}
 		}
 		else if( c == '5' ) { stop = 0; }
 
