@@ -15,7 +15,7 @@ typedef struct Data {
 	int workers;
 	int points;
 	int resources;
-	char* info; //wysylajmy tylko tekst, bez ‘\n’ na koncu
+	char info[120]; //wysylajmy tylko tekst, bez ‘\n’ na koncu
 	char end; //jak ktos zwyciezy to to rozne od 0
 } Data;
 

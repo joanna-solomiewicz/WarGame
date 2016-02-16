@@ -32,7 +32,7 @@ Data sendGameState(State* state, int player) {
 	data.workers = state->workers[player];
 	data.points = state->points[player];
 	data.resources = state->resources[player];
-//	strcpy(data.info, "Game State\0");
+	strcpy(data.info, "Game State\0");
 	data.end = state->end;
 	
 	return data;
