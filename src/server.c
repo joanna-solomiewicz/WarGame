@@ -49,8 +49,20 @@ int main() {
 	initConnection();
 	initData(state);
 
-	sleep(5);
-	destruction(state);
+	while(1) {
+		sleep(1);
+		state->resources[0] += 50;
+		Data data = sendGameState(state, 0);
+		int i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
+		if(i == -1) perror("msgsnd error");
+		else printf("Update sent to player #1\n");
+
+		state->resources[1] += 50;
+		data = sendGameState(state, 1);
+		i = msgsnd(queueIdList->player2Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
+		if(i == -1) perror("msgsnd error");
+		else printf("Update sent to player #2\n");
+	}
 }
 
 void initStateMemory() {
@@ -85,7 +97,10 @@ void f() {
 	init.nextMsg = KEYP1;
 	int i = msgsnd(queueIdList->initialQ, &init, sizeof(init.nextMsg), IPC_NOWAIT);
 	if(i == -1) perror("msgsnd error");
-	else printf("I've been killed !\n");
+	else {
+		printf("I've been killed !\n");
+		destruction(state);
+	}
 
 	exit(0);
 }
