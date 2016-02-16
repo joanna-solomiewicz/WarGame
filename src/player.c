@@ -10,7 +10,8 @@
 void clear();
 void printGameState(Data data);
 void printMenu();
-void building(Data data);
+void sendBuildMessage(Build build, int id2);
+void building(Data data, int id2);
 void update(Data data);
 
 int main() {
@@ -55,21 +56,19 @@ int main() {
 	printGameState(data);
 	printMenu();
 	while(1) {
-		i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
-		if(i == -1) perror("msgrcv error");
-		else update(data);
 		char c;
 		if( kbhit() ) {
 			c = getchar();
-			if(c == '1') building(data);
+			if(c == '1') building(data, id2);
 			else if(c == '2') {
-				clear();
-				printGameState(data);
-				printMenu();
 				printf("Attacking!\n");
+				sleep(5);
 			}
 		}
 		usleep(1);
+		i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
+		if(i == -1) perror("msgrcv error");
+		else update(data);
 	}
 
 	nonblock(NB_DISABLE);
@@ -84,10 +83,16 @@ void printGameState(Data data) {
 
 void printMenu() { printf("[1] BUILD [2] ATTACK\n"); }
 
-void building(Data data) { 
-	clear();
-	printGameState(data);
-	printMenu();
+void sendBuildMessage(Build build, int id2) {
+	int i = msgsnd(id2, &build, sizeof(Build) - sizeof(build.mtype), 0);
+	if(i == -1) perror("msgrcv error");
+	else printf("Build sent to server:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n\tworkers: %d\n",
+							build.light, build.heavy, build.cavalry, build.workers);
+	sleep(1);
+}
+
+void building(Data data, int id2) { 
+	update(data);
 	printf("What do You want to build? [1] LIGHT [2] HEAVY [3] CAVALRY [4] WORKERS [5] NOTHING, hit the wrong button\n");
 	int stop = 1;
 	while(stop) {
@@ -97,8 +102,28 @@ void building(Data data) {
 			printf("How many? (0-9)\n");
 			while(stop) {
 				if( kbhit() ) {
-					c = getchar();
-					if(c >= '0' && c <= '9') { stop = 0; }
+					char ch = getchar();
+					if(ch >= '0' && ch <= '9') { 
+						Build build;
+						build.mtype = 2;
+						build.light = build.heavy = build.cavalry = build.workers = 0;
+						switch((int)c-48) {
+							case 1:
+								build.light = (int)ch-48;
+								break;
+							case 2:
+								build.heavy = (int)ch-48;
+								break;
+							case 3:
+								build.cavalry = (int)ch-48;
+								break;
+							case 4:
+								build.workers = (int)ch-48;
+								break;
+						}
+						sendBuildMessage(build, id2);
+						stop = 0; 
+					}
 				}
 			}
 		}
