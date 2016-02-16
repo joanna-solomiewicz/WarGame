@@ -51,17 +51,17 @@ int main() {
 
 	while(1) {
 		sleep(1);
-		state->resources[0] += 50;
+		state->resources[0] += 50 + state->workers[0]*5;
 		Data data = sendGameState(state, 0);
 		int i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
 		if(i == -1) perror("msgsnd error");
-		else printf("Update sent to player #1\n");
+		else printf("Update sent to player #1 = %d\n", state->resources[0]);
 
-		state->resources[1] += 50;
+		state->resources[1] += 50 + state->workers[1]*5;
 		data = sendGameState(state, 1);
 		i = msgsnd(queueIdList->player2Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
 		if(i == -1) perror("msgsnd error");
-		else printf("Update sent to player #2\n");
+		else printf("Update sent to player #2 = %d\n", state->resources[1]);
 	}
 }
 
@@ -184,13 +184,13 @@ void initData(State* state) {
 	Data data = sendGameState(state, 0);
 	int i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
 	if(i == -1) perror("msgsnd error");
-	else printf("Update sent to player #1\n");
+	else printf("Initial data sent to player #1\n");
 
 	state->resources[1] = 300;
 	data = sendGameState(state, 1);
 	i = msgsnd(queueIdList->player2Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
 	if(i == -1) perror("msgsnd error");
-	else printf("Update sent to player #2\n");
+	else printf("Initial data sent to player #2\n");
 }
 void destruction(State* state) {
 	/* Destruction */
