@@ -52,21 +52,19 @@ int main() {
 	printGameState(data);
 
 	/* Printing game state with terminal clearing */
+	clear();
+	printGameState(data);
 	while(1) {
-		sleep(1);
-		clear();
-		printGameState(data);
-	}
-
-	char c;
-	int j = 0;
-	nonblock(NB_ENABLE);
-	while( !j ) {
+		char c;
+		nonblock(NB_ENABLE);
 		if( kbhit() ) {
+			clear();
+			printGameState(data);
 			c = getchar();
-			if( c == 'q' ) j = 1;
 			printf("%c\n", c);
 		}
+		nonblock(NB_DISABLE);
+		usleep(1);
 	}
-	nonblock(NB_DISABLE);
+
 }
