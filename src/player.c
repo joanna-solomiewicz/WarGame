@@ -14,9 +14,39 @@ void printGameState(Data data) {
 							data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources, data.info, data.end);
 }
 
-void printMenu() { printf("[1] Build [2] Attack\n"); }
+void printMenu() { printf("[1] BUILD [2] ATTACK\n"); }
+
+void building(Data data) { 
+	clear();
+	printGameState(data);
+	printMenu();
+	printf("What do You want to build? [1] LIGHT [2] HEAVY [3] CAVALRY [4] WORKERS [5] NOTHING, hit the wrong button\n");
+	int stop = 1;
+	while(stop) {
+		char c;
+		c = getchar();
+		if( c >= '0' && c <= '4') {
+			printf("How many? (0-9)\n");
+			while(stop) {
+				if( kbhit() ) {
+					c = getchar();
+					if(c >= '0' && c <= '9') { stop = 0; }
+				}
+			}
+		}
+		else if( c == '5' ) { stop = 0; }
+
+		clear();
+		printGameState(data);
+		printMenu();
+
+		usleep(1);
+	}
+}
 
 int main() {
+
+	nonblock(NB_ENABLE);
 
 	key_t key = KEY;
 
@@ -57,18 +87,18 @@ int main() {
 	printMenu();
 	while(1) {
 		char c;
-		nonblock(NB_ENABLE);
 		if( kbhit() ) {
-			clear();
-			printGameState(data);
-			printMenu();
 			c = getchar();
-			if(c == '1') printf("Building\n");
-			else if(c == '2') printf("Attacking!\n");
-			else printf("%c\n", c);
+			if(c == '1') building(data);
+			else if(c == '2') {
+				clear();
+				printGameState(data);
+				printMenu();
+				printf("Attacking!\n");
+			}
 		}
-		nonblock(NB_DISABLE);
 		usleep(1);
 	}
 
+	nonblock(NB_DISABLE);
 }
