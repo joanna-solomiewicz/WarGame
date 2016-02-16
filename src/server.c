@@ -34,7 +34,7 @@ QueueId* queueIdList;
 State* state;
 
 void initStateMemory();
-Data sendGameState(State* state, int player);
+void sendGameState(State* state, int player);
 void f();
 void initQueues();
 void initConnection();
@@ -52,16 +52,10 @@ int main() {
 	while(1) {
 		sleep(1);
 		state->resources[0] += 50 + state->workers[0]*5;
-		Data data = sendGameState(state, 0);
-		int i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
-		if(i == -1) perror("msgsnd error");
-		else printf("Update sent to player #1 = %d\n", state->resources[0]);
+		sendGameState(state, 0);
 
 		state->resources[1] += 50 + state->workers[1]*5;
-		data = sendGameState(state, 1);
-		i = msgsnd(queueIdList->player2Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
-		if(i == -1) perror("msgsnd error");
-		else printf("Update sent to player #2 = %d\n", state->resources[1]);
+		sendGameState(state, 1);
 	}
 }
 
@@ -73,7 +67,7 @@ void initStateMemory() {
 	state = (State*)shmat(shmid, NULL, 0);
 }
 
-Data sendGameState(State* state, int player) {
+void sendGameState(State* state, int player) {
 	Data data;
 	if(!player) data.mtype = KEYP1;
 	else data.mtype = KEYP2;
@@ -86,7 +80,11 @@ Data sendGameState(State* state, int player) {
 	strcpy(data.info, "Game State\0");
 	data.end = state->end;
 	
-	return data;
+	int i;
+	if(!player) i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
+	else i = msgsnd(queueIdList->player2Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
+	if(i == -1) perror("msgsnd error");
+	else printf("Update sent to player #%d = %d\n", player+1, state->resources[player]);
 }
 
 void f() {
@@ -181,17 +179,12 @@ void initConnection() {
 void initData(State* state) {
 	/* Sending 300 entities of resources to players */
 	state->resources[0] = 300;
-	Data data = sendGameState(state, 0);
-	int i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
-	if(i == -1) perror("msgsnd error");
-	else printf("Initial data sent to player #1\n");
+	sendGameState(state, 0);
 
 	state->resources[1] = 300;
-	data = sendGameState(state, 1);
-	i = msgsnd(queueIdList->player2Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
-	if(i == -1) perror("msgsnd error");
-	else printf("Initial data sent to player #2\n");
+	sendGameState(state, 1);
 }
+
 void destruction(State* state) {
 	/* Destruction */
 	int destructor = msgctl(queueIdList->initialQ, IPC_RMID, 0);
