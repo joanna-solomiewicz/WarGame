@@ -39,6 +39,8 @@ void f();
 void initQueues();
 void initConnection();
 void initData(State* state);
+void receiveBuild();
+void printBuild(int player);
 void destruction(State* state);
 
 int main() {
@@ -51,11 +53,13 @@ int main() {
 
 	while(1) {
 		sleep(1);
-		state->resources[0] += 50 + state->workers[0]*5;
-		sendGameState(state, 0);
+		int player;
+		for(player = 0; player < 2; player++) {
+			state->resources[player] += 50 + state->workers[player]*5;
+			sendGameState(state, player);
+		}
 
-		state->resources[1] += 50 + state->workers[1]*5;
-		sendGameState(state, 1);
+		receiveBuild();
 	}
 }
 
@@ -84,7 +88,7 @@ void sendGameState(State* state, int player) {
 	if(!player) i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
 	else i = msgsnd(queueIdList->player2Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
 	if(i == -1) perror("msgsnd error");
-	else printf("Update sent to player #%d = %d\n", player+1, state->resources[player]);
+//	else printf("Update sent to player #%d = %d\n", player+1, state->resources[player]);
 }
 
 void f() {
@@ -178,11 +182,41 @@ void initConnection() {
 
 void initData(State* state) {
 	/* Sending 300 entities of resources to players */
-	state->resources[0] = 300;
-	sendGameState(state, 0);
+	int player;
+	for(player = 0; player < 2; player++) {
+		state->light[player] = 0;
+		state->heavy[player] = 0;
+		state->cavalry[player] = 0;
+		state->workers[player] = 0;
+		state->points[player] = 0;
+		state->resources[player] = 300;
+		state->end = 'n';
+		
+		sendGameState(state, player);
+	}
+}
 
-	state->resources[1] = 300;
-	sendGameState(state, 1);
+void receiveBuild() {
+	Build build;
+	long type = 2;
+	int player;
+	for(player = 0; player < 2; player++) {
+		int i;
+		if(!player) i = msgrcv(queueIdList->player1Q, &build, sizeof(Build) - sizeof(build.mtype), type, IPC_NOWAIT);
+		else i = msgrcv(queueIdList->player2Q, &build, sizeof(Build) - sizeof(build.mtype), type, IPC_NOWAIT);
+		if(i != -1) {
+			state->light[player] += build.light;
+			state->heavy[player] += build.heavy;
+			state->cavalry[player] += build.cavalry;
+			state->workers[player] += build.workers;
+			printBuild(player);
+		}
+	}
+}
+
+void printBuild(int player) {
+	printf("Player #%d: %d light, %d heavy, %d cavalry, %d workers\n", 
+				player+1, state->light[player], state->heavy[player], state->cavalry[player], state->workers[player]);
 }
 
 void destruction(State* state) {
