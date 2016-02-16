@@ -31,6 +31,35 @@ typedef struct QueueId {
 } QueueId;
 
 QueueId* queueIdList;
+State* state;
+
+void initStateMemory();
+Data sendGameState(State* state, int player);
+void f();
+void initQueues();
+void initConnection();
+void initData(State* state);
+void destruction(State* state);
+
+int main() {
+	
+	initStateMemory();
+	initQueues();
+	signal(SIGINT, f);
+	initConnection();
+	initData(state);
+
+	sleep(5);
+	destruction(state);
+}
+
+void initStateMemory() {
+	/* Creating type State* shared memory */
+	key_t key = KEYMEM;
+	int shmid = shmget(key, sizeof(State), IPC_CREAT | 0640);
+	if(shmid == -1) perror("shmget error");
+	state = (State*)shmat(shmid, NULL, 0);
+}
 
 Data sendGameState(State* state, int player) {
 	Data data;
@@ -61,17 +90,9 @@ void f() {
 	exit(0);
 }
 
-int main() {
-	
-	/* Creating type State* shared memory */
-	State* state;
-	key_t key = KEYMEM;
-	int shmid = shmget(key, sizeof(State), IPC_CREAT | 0640);
-	if(shmid == -1) perror("shmget error");
-	state = (State*)shmat(shmid, NULL, 0);
-
+void initQueues() {
 	/* Opening/creating first queue */
-	key = KEY;
+	key_t key = KEY;
 	int id = msgget(key, IPC_CREAT | 0640);
 	if(id == -1) perror("msgget error");
 
@@ -105,15 +126,15 @@ int main() {
 
 	/* Creating type QueueId* shared memory */
 	key = 69;
-	shmid = shmget(key, sizeof(State), IPC_CREAT | 0640);
+	int shmid = shmget(key, sizeof(State), IPC_CREAT | 0640);
 	if(shmid == -1) perror("shmget error");
 	queueIdList = (QueueId*)shmat(shmid, NULL, 0);
 	queueIdList->initialQ = id;
 	queueIdList->player1Q = idP1;
 	queueIdList->player2Q = idP2;
-	
-	signal(SIGINT, f);
+}
 
+void initConnection() {
 	/* Sending private queues' keys to players*/
 	Init init;
 	int i;
@@ -122,7 +143,7 @@ int main() {
 	int doBreak = 1;
 	while(doBreak) {
 		long type = 1;
-		i = msgrcv(id, &init, sizeof(init.nextMsg), type, 0);
+		i = msgrcv(queueIdList->initialQ, &init, sizeof(init.nextMsg), type, 0);
 		if(i == -1) perror("msgrcv error");
 		else { 
 			printf("Init received %d\n", init.nextMsg); 
@@ -132,7 +153,7 @@ int main() {
 			if(players == 1) init.nextMsg = KEYP1;
 			else if(players == 2) init.nextMsg = KEYP2;
 
-			i = msgsnd(id, &init, sizeof(init.nextMsg), IPC_NOWAIT);
+			i = msgsnd(queueIdList->initialQ, &init, sizeof(init.nextMsg), IPC_NOWAIT);
 			if(i == -1) perror("msgsnd error");
 			else printf("Init #%d sent back. Key = %d\n", initNr, init.nextMsg);
 
@@ -140,36 +161,36 @@ int main() {
 		}
 		if(players == 2) doBreak = 0;
 	}
+}
 
-
+void initData(State* state) {
 	/* Sending 300 entities of resources to players */
 	state->resources[0] = 300;
 	Data data = sendGameState(state, 0);
-	i = msgsnd(idP1, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
+	int i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
 	if(i == -1) perror("msgsnd error");
 	else printf("Update sent to player #1\n");
 
 	state->resources[1] = 300;
 	data = sendGameState(state, 1);
-	i = msgsnd(idP2, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
+	i = msgsnd(queueIdList->player2Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
 	if(i == -1) perror("msgsnd error");
 	else printf("Update sent to player #2\n");
-
-
-	sleep(5);
-
+}
+void destruction(State* state) {
 	/* Destruction */
-	int destructor = msgctl(id, IPC_RMID, 0);
+	int destructor = msgctl(queueIdList->initialQ, IPC_RMID, 0);
 	if(destructor == -1) perror("destructor error");
 	else printf("Queue #1 key = %d destructed\n", KEY);
 
-	destructor = msgctl(idP1, IPC_RMID, 0);
+	destructor = msgctl(queueIdList->player1Q, IPC_RMID, 0);
 	if(destructor == -1) perror("destructor error");
 	else printf("Queue #2 key = %d destructed\n", KEYP1);
 
-	destructor = msgctl(idP2, IPC_RMID, 0);
+	destructor = msgctl(queueIdList->player2Q, IPC_RMID, 0);
 	if(destructor == -1) perror("destructor error");
 	else printf("Queue #3 key = %d destructed\n", KEYP2);
 
 	shmdt(state);
 }
+
