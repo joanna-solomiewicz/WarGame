@@ -7,14 +7,14 @@
 #include <stdio.h>
 #include <unistd.h>
 
+void clear() { printf("\033[H\033[J"); }
+
 void printGameState(Data data) {
 	printf("Game state:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n\tworkers: %d\n\tpoints: %d\n\tresources: %d\n\tinfo: %s\n\tend: %c\n", 
 							data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources, data.info, data.end);
 }
 
-void clear() {
-	printf("\033[H\033[J");
-}
+void printMenu() { printf("[1] Build [2] Attack\n"); }
 
 int main() {
 
@@ -54,14 +54,18 @@ int main() {
 	/* Printing game state with terminal clearing */
 	clear();
 	printGameState(data);
+	printMenu();
 	while(1) {
 		char c;
 		nonblock(NB_ENABLE);
 		if( kbhit() ) {
 			clear();
 			printGameState(data);
+			printMenu();
 			c = getchar();
-			printf("%c\n", c);
+			if(c == '1') printf("Building\n");
+			else if(c == '2') printf("Attacking!\n");
+			else printf("%c\n", c);
 		}
 		nonblock(NB_DISABLE);
 		usleep(1);
