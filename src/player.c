@@ -70,11 +70,7 @@ int main() {
 		if( kbhit() ) {
 			c = getchar();
 			if(c == '1') building(data, id2);
-			else if(c == '2') {
-				attacking(data, id2);
-//				printf("Attacking!\n");
-				sleep(5);
-			}
+			else if(c == '2') attacking(data, id2);
 		}
 		usleep(1);
 		i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
@@ -89,7 +85,7 @@ int main() {
 void clear() { printf("\033[H\033[J"); }
 
 void printGameState(Data data) {
-	printf("Game state:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n\tworkers: %d\n\tpoints: %d\n\tresources: %d\n\tinfo: %s\n\tend: %c\n", 
+	printf("GAME STATE\n\tlight:\t\t%d\n\theavy:\t\t%d\n\tcavalry:\t%d\n\tworkers:\t%d\n\tpoints:\t\t%d\n\tresources:\t%d\n\tinfo:\t\t%s\n\tend:\t\t%c\n", 
 							data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources, data.info, data.end);
 }
 
@@ -98,14 +94,13 @@ void printMenu() { printf("[1] BUILD [2] ATTACK\n"); }
 void sendBuildMessage(Build build, int id2) {
 	int i = msgsnd(id2, &build, sizeof(Build) - sizeof(build.mtype), 0);
 	if(i == -1) perror("msgrcv error");
-	else printf("Build sent to server:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n\tworkers: %d\n",
-							build.light, build.heavy, build.cavalry, build.workers);
-	sleep(1);
+//	else printf("Build sent to server:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n\tworkers: %d\n",
+//							build.light, build.heavy, build.cavalry, build.workers);
 }
 
 void building(Data data, int id2) { 
 	update(data);
-	printf("What do You want to build? [1] LIGHT [2] HEAVY [3] CAVALRY [4] WORKERS [5] NOTHING, hit the wrong button\n");
+	printf("[1] LIGHT [2] HEAVY [3] CAVALRY [4] WORKERS [5] NOTHING, hit the wrong button\n");
 	int stop = 1;
 	while(stop) {
 		char c;
@@ -149,9 +144,8 @@ void building(Data data, int id2) {
 void sendAttackMessage(Attack attack, int id2) {
 	int i = msgsnd(id2, &attack, sizeof(Attack) - sizeof(attack.mtype), 0);
 	if(i == -1) perror("msgrcv error");
-	else printf("Attack sent to server:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n",
-							attack.light, attack.heavy, attack.cavalry);
-	sleep(1);
+//	else printf("Attack sent to server:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n",
+//							attack.light, attack.heavy, attack.cavalry);
 }
 
 void attacking(Data data, int id2) {
