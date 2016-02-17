@@ -7,6 +7,8 @@ int main() {
 	initSemaphore();
 	initQueues();
 	signal(SIGINT, f);
+	signal(SIGQUIT, f);
+	signal(SIGTERM, f);
 	initConnection();
 	waitingForPlayers();
 	initData();
@@ -109,15 +111,10 @@ void sendGameState(int player) {
 }
 
 void f() {
-//	Init init;
-//	init.mtype = 4;
-//	init.nextMsg = KEYP1;
-//	int i = msgsnd(queueIdList->initialQ, &init, sizeof(init.nextMsg), IPC_NOWAIT);
-//	if(i == -1) perror("msgsnd error");
-//	else {
-		printf("\nI've been killed !\n");
-		destruction();
-//	}
+	printf("\nI've been killed !\n");
+	destruction();
+	int i = kill(0, SIGKILL);
+	if(i == -1) perror("kill error");
 
 	exit(0);
 }
@@ -400,15 +397,15 @@ void destruction() {
 	/* Destruction */
 	int destructor = msgctl(queueIdList->initialQ, IPC_RMID, 0);
 	if(destructor == -1) perror("destructor error");
-	else printf("Queue #1 key = %d destructed\n", KEY);
+//	else printf("Queue #1 key = %d destructed\n", KEY);
 
 	destructor = msgctl(queueIdList->player1Q, IPC_RMID, 0);
 	if(destructor == -1) perror("destructor error");
-	else printf("Queue #2 key = %d destructed\n", KEYP1);
+//	else printf("Queue #2 key = %d destructed\n", KEYP1);
 
 	destructor = msgctl(queueIdList->player2Q, IPC_RMID, 0);
 	if(destructor == -1) perror("destructor error");
-	else printf("Queue #3 key = %d destructed\n", KEYP2);
+//	else printf("Queue #3 key = %d destructed\n", KEYP2);
 
 	shmdt(state);
 }
