@@ -46,6 +46,7 @@ void sendGameState(State* state, int player);
 void f();
 void initQueues();
 void initConnection();
+void waitingForPlayers();
 void initData(State* state);
 void receiveBuild(Price prices, State* state);
 void printBuild(Build build, int player);
@@ -59,6 +60,7 @@ int main() {
 	initQueues();
 	signal(SIGINT, f);
 	initConnection();
+	waitingForPlayers();
 	initData(state);
 
 	while(1) {
@@ -92,8 +94,8 @@ void initStateMemory() {
 
 void sendGameState(State* state, int player) {
 	Data data;
-	if(!player) data.mtype = KEYP1;
-	else data.mtype = KEYP2;
+	if(!player) data.mtype = 1;
+	else data.mtype = 1;
 	data.light = state->light[player];
 	data.heavy = state->heavy[player];
 	data.cavalry = state->cavalry[player];
@@ -127,12 +129,20 @@ void f() {
 }
 
 void initQueues() {
+	int del;
+
 	/* Opening/creating first queue */
 	key_t key = KEY;
-	int id = msgget(key, IPC_CREAT | 0640);
-	if(id == -1) perror("msgget error");
-
-	int del;
+	int id = msgget(key, 0640);
+	if(id == -1) {
+		id = msgget(key, IPC_CREAT | 0640);
+		if(id == -1) perror("msgget error");
+	}
+	else {
+		del = msgctl(id, IPC_RMID, 0);
+		if(del == -1) perror("msgctl error");
+		id = msgget(key, IPC_CREAT | 0640);
+	}
 
 	/* Creating private queue for player #1 */
 	key = KEYP1;
@@ -170,32 +180,28 @@ void initQueues() {
 	queueIdList->player2Q = idP2;
 }
 
+
 void initConnection() {
-	/* Sending private queues' keys to players*/
+	/* Sending private queues' keys */
 	Init init;
-	int i;
+	int players;
+	for(players = 0; players < 2; players++) {
+		init.mtype = 1;
+		if(players == 0) init.nextMsg = KEYP1;
+		else if(players == 1) init.nextMsg = KEYP2;
+		int i = msgsnd(queueIdList->initialQ, &init, sizeof(init.nextMsg), IPC_NOWAIT);
+		if(i == -1) perror("msgsnd error");
+		else printf("Init #%d sent. Key = %d\n", players+1, init.nextMsg);
+	}
+}
+
+void waitingForPlayers() {
 	int players = 0;
-	int initNr = 1;
-	int doBreak = 1;
-	while(doBreak) {
-		long type = 1;
-		i = msgrcv(queueIdList->initialQ, &init, sizeof(init.nextMsg), type, 0);
-		if(i == -1) perror("msgrcv error");
-		else { 
-			printf("Init received %d\n", init.nextMsg); 
-			players++; 
-
-			init.mtype = 2;
-			if(players == 1) init.nextMsg = KEYP1;
-			else if(players == 2) init.nextMsg = KEYP2;
-
-			i = msgsnd(queueIdList->initialQ, &init, sizeof(init.nextMsg), IPC_NOWAIT);
-			if(i == -1) perror("msgsnd error");
-			else printf("Init #%d sent back. Key = %d\n", initNr, init.nextMsg);
-
-			initNr++;
-		}
-		if(players == 2) doBreak = 0;
+	while(players < 2) {
+		Init init;
+		long type = 2;
+		int i = msgrcv(queueIdList->initialQ, &init, sizeof(init.nextMsg), type, IPC_NOWAIT);
+		if(i != -1) players++;
 	}
 }
 

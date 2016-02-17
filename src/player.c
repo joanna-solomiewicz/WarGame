@@ -5,6 +5,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 void clear();
@@ -20,22 +21,28 @@ int main() {
 
 	key_t key = KEY;
 
-	int id = msgget(key, IPC_CREAT | 0640);
-	if(id == -1) perror("msgget error");
+	int id = msgget(key, 0640);
+	if(id == -1) {
+		printf("Server is not active. Come back later ;)\n");
+		exit(0);
+	}
 
-	/* Sending type 1 message to server */
+	/* Waiting for type 1 message from server containing a key for a private msg queue */
 	Init init;
-	init.mtype = 1;
-	init.nextMsg = getpid();
-	int i = msgsnd(id, &init, sizeof(init.nextMsg), 0);
-	if(i == -1) perror("msgsnd error");
-	else printf("Init sent\n");
-
-	/* Waiting for type 2 message from server containing a key for a private msg queue */
-	long type = 2;
-	i = msgrcv(id, &init, sizeof(init.nextMsg), type, 0);
-	if(i == -1) perror("msgrcv error");
-	else printf("Init received %d\n", init.nextMsg);
+	long type = 1;
+	int i = msgrcv(id, &init, sizeof(init.nextMsg), type, IPC_NOWAIT);
+	if(i == -1) {
+		printf("Server is not available. Come back later ;)\n");
+		exit(0);
+	}
+	else {
+		printf("Init received %d\n", init.nextMsg);
+		Init initBack;
+		initBack.mtype = 2;
+		i = msgsnd(id, &initBack, sizeof(init.nextMsg), 0);
+		if(i == -1) perror("msgsnd error");
+		else printf("To server, private key received\n");
+	}
 
 	/* Opening the private queue */
 	key = init.nextMsg;
@@ -45,10 +52,11 @@ int main() {
 
 	/* Receiving game state */
 	Data data;
-	type = key;
-	i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
-	if(i == -1) perror("msgrcv error");
-	else printf("Update received\n");
+	type = 1;
+	do {
+		i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
+	} while(i == -1);
+	printf("Update received\n");
 	printGameState(data);
 
 	/* Printing game state with terminal clearing */
