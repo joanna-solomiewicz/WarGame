@@ -139,9 +139,11 @@ void initQueues() {
 		if(id == -1) perror("msgget error");
 	}
 	else {
-		del = msgctl(id, IPC_RMID, 0);
-		if(del == -1) perror("msgctl error");
-		id = msgget(key, IPC_CREAT | 0640);
+		printf("Another server already working\n");
+		exit(0);
+//		del = msgctl(id, IPC_RMID, 0);
+//		if(del == -1) perror("msgctl error");
+//		id = msgget(key, IPC_CREAT | 0640);
 	}
 
 	/* Creating private queue for player #1 */
@@ -200,8 +202,12 @@ void waitingForPlayers() {
 	while(players < 2) {
 		Init init;
 		long type = 2;
-		int i = msgrcv(queueIdList->initialQ, &init, sizeof(init.nextMsg), type, IPC_NOWAIT);
-		if(i != -1) players++;
+		int i = msgrcv(queueIdList->initialQ, &init, sizeof(init.nextMsg), type, 0);
+		if(i == -1) {
+			printf("Queue error\n");
+			exit(0);
+		}
+		else players++;
 	}
 }
 

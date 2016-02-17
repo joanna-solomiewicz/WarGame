@@ -75,8 +75,9 @@ int main() {
 		}
 		usleep(1);
 		i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
-		if(i == -1) perror("msgrcv error");
-		else update(data);
+//		if(i == -1) perror("msgrcv error");
+//		else update(data);
+		if(i != -1) update(data);
 	}
 
 	nonblock(NB_DISABLE);
