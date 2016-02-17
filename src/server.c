@@ -308,17 +308,27 @@ void printBuild(Build build, int player) {
 }
 
 void receiveAttack() {
+	int type = 3;
+	int player;
+
+	int p1 = fork();
+	if(p1 == 0) player = 0;
+	else {
+		int p2 = fork();
+		if(p2 == 0) player = 1;
+		else return;
+	}
+
 	Attack attack;
 	int i;
-	int player;
-	int type = 3;
-	for(player = 0; player < 2; player++) {
-		if(!player) i = msgrcv(queueIdList->player1Q, &attack, sizeof(Attack) - sizeof(attack.mtype), type, IPC_NOWAIT);
-		else i = msgrcv(queueIdList->player2Q, &attack, sizeof(Attack) - sizeof(attack.mtype), type, IPC_NOWAIT);
-		if(i != -1) {
-			printf("Attack received from player #%d\n", player+1);
-		}
+	if(!player) i = msgrcv(queueIdList->player1Q, &attack, sizeof(Attack) - sizeof(attack.mtype), type, IPC_NOWAIT);
+	else i = msgrcv(queueIdList->player2Q, &attack, sizeof(Attack) - sizeof(attack.mtype), type, IPC_NOWAIT);
+	if(i != -1) {
+		printf("Attack received from player #%d\n", player+1);
+		sleep(5);
+		printf("End of attack by player #%d\n", player+1);
 	}
+	exit(0);
 }
 
 void destruction(State* state) {
