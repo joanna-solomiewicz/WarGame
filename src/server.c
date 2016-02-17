@@ -224,58 +224,74 @@ void initData(State* state) {
 void receiveBuild(Price prices, State* state) {
 	long type = 2;
 	int player;
-	for(player = 0; player < 2; player++) {
-		Build build;
-		int i;
-		if(!player) i = msgrcv(queueIdList->player1Q, &build, sizeof(Build) - sizeof(build.mtype), type, IPC_NOWAIT);
-		else i = msgrcv(queueIdList->player2Q, &build, sizeof(Build) - sizeof(build.mtype), type, IPC_NOWAIT);
-		if(i != -1) {
-			if(build.light) {
+
+	int p1 = fork();
+	if(p1 == 0) player = 0;
+	else {
+		int p2 = fork();
+		if(p2 == 0) player = 1;
+		else return;
+	}
+
+	Build build;
+	int i;
+	if(!player) i = msgrcv(queueIdList->player1Q, &build, sizeof(Build) - sizeof(build.mtype), type, IPC_NOWAIT);
+	else i = msgrcv(queueIdList->player2Q, &build, sizeof(Build) - sizeof(build.mtype), type, IPC_NOWAIT);
+	if(i != -1) {
+		if(build.light) {
+			if(build.light*prices.light <= state->resources[player]) {
 				printBuild(build, player);
-				if(build.light*prices.light <= state->resources[player]) {
-					int i;
-					for(i = build.light; i > 0; i--) {
-						sleep(2);
-						state->light[player]++;
-						sendGameState(state, player);
-					}
+				int i;
+				for(i = build.light; i > 0; i--) {
+					sleep(2);
+					state->light[player]++;
+					sendGameState(state, player);
+					printf("Light warrior has been recruited\n");
 				}
 			}
-			else if(build.heavy) {
+			else { printf("Player #%d, not enough resources\n", player+1); }
+		}
+		else if(build.heavy) {
+			if(build.heavy*prices.heavy <= state->resources[player]) {
 				printBuild(build, player);
-				if(build.heavy*prices.heavy <= state->resources[player]) {
-					int i;
-					for(i = build.heavy; i > 0; i--) {
-						sleep(3);
-						state->heavy[player]++;
-						sendGameState(state, player);
-					}
+				int i;
+				for(i = build.heavy; i > 0; i--) {
+					sleep(3);
+					state->heavy[player]++;
+					sendGameState(state, player);
+					printf("Heavy warrior has been recruited\n");
 				}
 			}
-			else if(build.cavalry) {
+			else { printf("Player #%d, not enough resources\n", player+1); }
+		}
+		else if(build.cavalry) {
+			if(build.cavalry*prices.cavalry <= state->resources[player]) {
 				printBuild(build, player);
-				if(build.cavalry*prices.cavalry <= state->resources[player]) {
-					int i;
-					for(i = build.cavalry; i > 0; i--) {
-						sleep(5);
-						state->cavalry[player]++;
-						sendGameState(state, player);
-					}
+				int i;
+				for(i = build.cavalry; i > 0; i--) {
+					sleep(5);
+					state->cavalry[player]++;
+					sendGameState(state, player);
+					printf("Cavalryman has been recruited\n");
 				}
 			}
-			else if(build.workers) {
+			else { printf("Player #%d, not enough resources\n", player+1); }
+		}
+		else if(build.workers) {
+			if(build.workers*prices.workers <= state->resources[player]) {
 				printBuild(build, player);
-				if(build.workers*prices.workers <= state->resources[player]) {
-					int i;
-					for(i = build.workers; i > 0; i--) {
-						sleep(2);
-						state->workers[player]++;
-						sendGameState(state, player);
-					}
+				int i;
+				for(i = build.workers; i > 0; i--) {
+					sleep(2);
+					state->workers[player]++;
+					sendGameState(state, player);
+					printf("Worker has been recruited\n");
 				}
 			}
+			else { printf("Player #%d, not enough resources\n", player+1); }
 		}
 	}
+	exit(0);	
 }
 
 void printBuild(Build build, int player) {
