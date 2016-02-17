@@ -90,7 +90,7 @@ void V(int semid, struct sembuf sem) {
 void clear() { printf("\033[H\033[J"); }
 
 void printGameState() {
-	printf(	"\t\t\t  WAR GAME STATE"
+	printf(	"\n\t\t\t  WAR GAME STATE"
 				"\n\t\tP1\t\t\t\tP2"
 				"\n\t~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 				"\n\tlight:\t\t%d\t|\tlight:\t\t%d"

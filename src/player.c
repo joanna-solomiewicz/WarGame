@@ -47,6 +47,7 @@ int main() {
 	printf("Update received\n");
 	printGameState(data);
 	strcpy(status, data.info);
+	printLog();
 
 	/* Printing game state with terminal clearing */
 	clear();
@@ -71,7 +72,7 @@ int main() {
 void clear() { printf("\033[H\033[J"); }
 
 void printGameState(Data data) {
-	printf("%s\nGAME STATE\n\tlight:\t\t%d\n\theavy:\t\t%d\n\tcavalry:\t%d\n\tworkers:\t%d\n\tpoints:\t\t%d\n\tresources:\t%d\n", status, data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources);
+	printf("\n\t  %s\n\tMY WAR GAME STATE\n\tlight:\t\t%d\n\theavy:\t\t%d\n\tcavalry:\t%d\n\tworkers:\t%d\n\tpoints:\t\t%d\n\tresources:\t%d\n", status, data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources);
 }
 
 void updateLog(Data data) {
@@ -84,10 +85,10 @@ void updateLog(Data data) {
 }
 
 void printLog() {
-	printf("%s\n%s\n%s\n%s\n", infoLog[0], infoLog[1], infoLog[2], infoLog[3]);
+	printf("\n\t~~ %s\n\t~~ %s\n\t~~ %s\n\t~~ %s\n\n", infoLog[0], infoLog[1], infoLog[2], infoLog[3]);
 }
 
-void printMenu() { printf("[1] BUILD [2] ATTACK\n"); }
+void printMenu() { printf("\t[1] BUILD [2] ATTACK\n"); }
 
 void sendBuildMessage(Build build, int id2) {
 	int i = msgsnd(id2, &build, sizeof(Build) - sizeof(build.mtype), 0);
@@ -96,13 +97,13 @@ void sendBuildMessage(Build build, int id2) {
 
 void building(Data data, int id2) { 
 	update(data);
-	printf("[1] LIGHT [2] HEAVY [3] CAVALRY [4] WORKERS [5] NOTHING, hit the wrong button\n");
+	printf("\n\t[1] LIGHT\n\t[2] HEAVY\n\t[3] CAVALRY\n\t[4] WORKERS\n\t[5] NOTHING, hit the wrong button\n");
 	int stop = 1;
 	while(stop) {
 		char c;
 		c = getchar();
 		if( c >= '0' && c <= '4') {
-			printf("How many? (0-9)\n");
+			printf("\n\tHOW MANY? (0-9)\n");
 			while(stop) {
 				if( kbhit() ) {
 					char ch = getchar();
@@ -144,7 +145,7 @@ void sendAttackMessage(Attack attack, int id2) {
 
 void attacking(Data data, int id2) {
 	update(data);
-	printf("How many warriors would You like to send to war?\n");
+//	printf("\n\tHow many warriors would You like to send to war?\n");
 
 	Attack attack;
 	attack.mtype = 3;
@@ -153,13 +154,13 @@ void attacking(Data data, int id2) {
 	for(i = 0; i < 3; i++) {
 		switch(i) {
 			case 0:
-				printf("\tHow many light warriors? (0-9)\n");
+				printf("\n\tHOW MANY LIGHT WARRIORS? (0-9)\n");
 				break;
 			case 1:
-				printf("\tHow many heavy warriors? (0-9)\n");
+				printf("\tHOW MANY HEAVY WARRIORS? (0-9)\n");
 				break;
 			case 2:
-				printf("\tHow many cavalryman? (0-9)\n");
+				printf("\tHOW MANY CAVALRYMAN? (0-9)\n");
 				break;
 		}
 		int stop = 1;
