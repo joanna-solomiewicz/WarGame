@@ -21,6 +21,18 @@ typedef struct Price {
 	int workers;
 } Price;
 
+typedef struct AttackForce {
+	float light;
+	float heavy;
+	float cavalry;
+} AttackForce;
+
+typedef struct DefenceForce {
+	float light;
+	float heavy;
+	float cavalry;
+} DefenceForce;
+
 typedef struct State {
 	int light[2];
 	int heavy[2];
@@ -41,6 +53,8 @@ QueueId* queueIdList;
 State* state;
 
 Price setPrices();
+AttackForce setAttackForce();
+DefenceForce setDefenceForce();
 void initStateMemory();
 void sendGameState(State* state, int player);
 void f();
@@ -50,12 +64,14 @@ void waitingForPlayers();
 void initData(State* state);
 void receiveBuild(Price prices, State* state);
 void printBuild(Build build, int player);
-void receiveAttack();
+void receiveAttack(AttackForce attackForce, DefenceForce defenceForce, State* state);
 void destruction(State* state);
 
 int main() {
 	
 	Price prices = setPrices();
+	AttackForce attackForce = setAttackForce();
+	DefenceForce defenceForce = setDefenceForce();
 
 	initStateMemory();
 	initQueues();
@@ -73,7 +89,7 @@ int main() {
 		}
 
 		receiveBuild(prices, state);
-		receiveAttack();
+		receiveAttack(attackForce, defenceForce, state);
 	}
 }
 
@@ -84,6 +100,22 @@ Price setPrices() {
 	price.cavalry = 550;
 	price.workers = 150;
 	return price;
+}
+
+AttackForce setAttackForce() {
+	AttackForce attackForce;
+	attackForce.light = 1;
+	attackForce.heavy = 1.5;
+	attackForce.cavalry = 3.5;
+	return attackForce;
+}
+
+DefenceForce setDefenceForce() {
+	DefenceForce defenceForce;
+	defenceForce.light = 1.2;
+	defenceForce.heavy = 3;
+	defenceForce.cavalry = 1.2;
+	return defenceForce;
 }
 
 void initStateMemory() {
@@ -307,7 +339,7 @@ void printBuild(Build build, int player) {
 				player+1, build.light, build.heavy, build.cavalry, build.workers);
 }
 
-void receiveAttack() {
+void receiveAttack(AttackForce attackForce, DefenceForce defenceForce, State* state) {
 	int type = 3;
 	int player;
 
@@ -325,6 +357,23 @@ void receiveAttack() {
 	else i = msgrcv(queueIdList->player2Q, &attack, sizeof(Attack) - sizeof(attack.mtype), type, IPC_NOWAIT);
 	if(i != -1) {
 		printf("Attack received from player #%d\n", player+1);
+		int enemy = (player+1)%2;
+		int attackF = attack.light*attackForce.light + attack.heavy*attackForce.heavy + attack.cavalry*attackForce.cavalry;
+		int defenceF = state->light[enemy]*defenceForce.light + state->heavy[enemy]*defenceForce.heavy + state->cavalry[enemy]*defenceForce.cavalry;
+		if(attackF-defenceF > 0) state->light[enemy] = state->heavy[enemy] = state->cavalry[enemy] = 0;
+		else {
+			state->light[enemy] -= state->light[enemy]*attackF/defenceF;
+			state->heavy[enemy] -= state->heavy[enemy]*attackF/defenceF;
+			state->cavalry[enemy] -= state->cavalry[enemy]*attackF/defenceF;
+		}
+		attackF = state->light[enemy]*attackForce.light + state->heavy[enemy]*attackForce.heavy + state->cavalry[enemy]*attackForce.cavalry;
+		defenceF = attack.light*defenceForce.light + attack.heavy*defenceForce.heavy + attack.cavalry*defenceForce.cavalry;
+		if(attackF-defenceF > 0) state->light[player] = state->heavy[player] = state->cavalry[player] = 0;
+		else {
+			state->light[player] -= state->light[player]*attackF/defenceF;
+			state->heavy[player] -= state->heavy[player]*attackF/defenceF;
+			state->cavalry[player] -= state->cavalry[player]*attackF/defenceF;
+		}
 		sleep(5);
 		printf("End of attack by player #%d\n", player+1);
 	}
