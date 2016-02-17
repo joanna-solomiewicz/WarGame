@@ -295,6 +295,7 @@ void receiveBuild(Price prices, State* state) {
 	if(i != -1) {
 		if(build.light) {
 			if(build.light*prices.light <= state->resources[player]) {
+				state->resources[player] -= build.light*prices.light;
 				printBuild(build, player);
 				int i;
 				for(i = build.light; i > 0; i--) {
@@ -309,6 +310,7 @@ void receiveBuild(Price prices, State* state) {
 		}
 		else if(build.heavy) {
 			if(build.heavy*prices.heavy <= state->resources[player]) {
+				state->resources[player] -= build.heavy*prices.heavy;
 				printBuild(build, player);
 				int i;
 				for(i = build.heavy; i > 0; i--) {
@@ -323,6 +325,7 @@ void receiveBuild(Price prices, State* state) {
 		}
 		else if(build.cavalry) {
 			if(build.cavalry*prices.cavalry <= state->resources[player]) {
+				state->resources[player] -= build.cavalry*prices.cavalry;
 				printBuild(build, player);
 				int i;
 				for(i = build.cavalry; i > 0; i--) {
@@ -337,6 +340,7 @@ void receiveBuild(Price prices, State* state) {
 		}
 		else if(build.workers) {
 			if(build.workers*prices.workers <= state->resources[player]) {
+				state->resources[player] -= build.workers*prices.workers;
 				printBuild(build, player);
 				int i;
 				for(i = build.workers; i > 0; i--) {
