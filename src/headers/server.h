@@ -53,19 +53,24 @@ typedef struct QueueId {
 
 QueueId* queueIdList;
 State* state;
+Price prices;
+AttackForce attackForce;
+DefenceForce defenceForce;
 
 Price setPrices();
 AttackForce setAttackForce();
 DefenceForce setDefenceForce();
+void initConsts();
 void initStateMemory();
-void sendGameState(State* state, int player);
+void sendGameState(int player);
 void f();
 void initQueues();
 void initConnection();
 void waitingForPlayers();
-void initData(State* state);
-void sendResources(State* state);
-void receiveBuild(Price prices, State* state);
+void initData();
+void sendResources();
+void receiveBuild();
 void printBuild(Build build, int player);
-void receiveAttack(AttackForce attackForce, DefenceForce defenceForce, State* state);
-void destruction(State* state);
+void receiveAttack();
+void destruction();
+

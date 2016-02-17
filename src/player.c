@@ -57,8 +57,6 @@ int main() {
 		}
 		usleep(1);
 		i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
-//		if(i == -1) perror("msgrcv error");
-//		else update(data);
 		if(i != -1) update(data);
 	}
 
@@ -77,8 +75,6 @@ void printMenu() { printf("[1] BUILD [2] ATTACK\n"); }
 void sendBuildMessage(Build build, int id2) {
 	int i = msgsnd(id2, &build, sizeof(Build) - sizeof(build.mtype), 0);
 	if(i == -1) perror("msgrcv error");
-//	else printf("Build sent to server:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n\tworkers: %d\n",
-//							build.light, build.heavy, build.cavalry, build.workers);
 }
 
 void building(Data data, int id2) { 
@@ -127,8 +123,6 @@ void building(Data data, int id2) {
 void sendAttackMessage(Attack attack, int id2) {
 	int i = msgsnd(id2, &attack, sizeof(Attack) - sizeof(attack.mtype), 0);
 	if(i == -1) perror("msgrcv error");
-//	else printf("Attack sent to server:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n",
-//							attack.light, attack.heavy, attack.cavalry);
 }
 
 void attacking(Data data, int id2) {

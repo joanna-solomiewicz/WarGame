@@ -2,21 +2,18 @@
 
 int main() {
 	
-	Price prices = setPrices();
-	AttackForce attackForce = setAttackForce();
-	DefenceForce defenceForce = setDefenceForce();
-
+	initConsts();
 	initStateMemory();
 	initQueues();
 	signal(SIGINT, f);
 	initConnection();
 	waitingForPlayers();
-	initData(state);
+	initData();
 
 	while(1) {
-		sendResources(state);
-		receiveBuild(prices, state);
-		receiveAttack(attackForce, defenceForce, state);
+		sendResources();
+		receiveBuild(prices);
+		receiveAttack(attackForce, defenceForce);
 	}
 }
 
@@ -45,6 +42,12 @@ DefenceForce setDefenceForce() {
 	return defenceForce;
 }
 
+void initConsts() {
+	prices = setPrices();
+	attackForce = setAttackForce();
+	defenceForce = setDefenceForce();
+}
+
 void initStateMemory() {
 	/* Creating type State* shared memory */
 	key_t key = KEYMEM;
@@ -58,7 +61,7 @@ void printGameState(State* state) {
 				state->light[0], state->light[1], state->heavy[0], state->heavy[1], state->cavalry[0], state->cavalry[1], 
 				state->workers[0], state->workers[1], state->points[0], state->points[1], state->resources[0], state->resources[1]);
 }
-void sendGameState(State* state, int player) {
+void sendGameState(int player) {
 	Data data;
 	if(!player) data.mtype = 1;
 	else data.mtype = 1;
@@ -68,19 +71,17 @@ void sendGameState(State* state, int player) {
 	data.workers = state->workers[player];
 	data.points = state->points[player];
 	data.resources = state->resources[player];
-	strcpy(data.info, "Game State\0");
+	if(!player) strcpy(data.info, "I'M PLAYER #1\0");
+	else strcpy(data.info, "I'M PLAYER #2\0");
 	data.end = state->end;
 	
 	int i;
 	if(!player) i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
 	else i = msgsnd(queueIdList->player2Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
 	if(i == -1) perror("msgsnd error");
-//	else printf("Update sent to player #%d = %d\n", player+1, state->resources[player]);
 }
 
 void f() {
-	printf("Signal handling\n");
-
 	Init init;
 	init.mtype = 4;
 	init.nextMsg = KEYP1;
@@ -88,7 +89,7 @@ void f() {
 	if(i == -1) perror("msgsnd error");
 	else {
 		printf("I've been killed !\n");
-		destruction(state);
+		destruction();
 	}
 
 	exit(0);
@@ -177,7 +178,7 @@ void waitingForPlayers() {
 	}
 }
 
-void initData(State* state) {
+void initData() {
 	/* Sending 300 entities of resources to players */
 	int player;
 	for(player = 0; player < 2; player++) {
@@ -189,11 +190,11 @@ void initData(State* state) {
 		state->resources[player] = 300;
 		state->end = 'n';
 		
-		sendGameState(state, player);
+		sendGameState(player);
 	}
 }
 
-void sendResources(State* state) {
+void sendResources() {
 	sleep(1);
 	int player;
 	int p1 = fork();
@@ -204,11 +205,11 @@ void sendResources(State* state) {
 		else return;
 	}
 	state->resources[player] += 50 + state->workers[player]*5;
-	sendGameState(state, player);
+	sendGameState(player);
 	exit(0);
 }
 
-void receiveBuild(Price prices, State* state) {
+void receiveBuild() {
 	long type = 2;
 	int player;
 
@@ -233,7 +234,7 @@ void receiveBuild(Price prices, State* state) {
 				for(i = build.light; i > 0; i--) {
 					sleep(2);
 					state->light[player]++;
-					sendGameState(state, player);
+					sendGameState(player);
 					printf("Light warrior has been recruited\n");
 					printGameState(state);
 				}
@@ -248,7 +249,7 @@ void receiveBuild(Price prices, State* state) {
 				for(i = build.heavy; i > 0; i--) {
 					sleep(3);
 					state->heavy[player]++;
-					sendGameState(state, player);
+					sendGameState(player);
 					printf("Heavy warrior has been recruited\n");
 					printGameState(state);
 				}
@@ -263,7 +264,7 @@ void receiveBuild(Price prices, State* state) {
 				for(i = build.cavalry; i > 0; i--) {
 					sleep(5);
 					state->cavalry[player]++;
-					sendGameState(state, player);
+					sendGameState(player);
 					printf("Cavalryman has been recruited\n");
 					printGameState(state);
 				}
@@ -278,7 +279,7 @@ void receiveBuild(Price prices, State* state) {
 				for(i = build.workers; i > 0; i--) {
 					sleep(2);
 					state->workers[player]++;
-					sendGameState(state, player);
+					sendGameState(player);
 					printf("Worker has been recruited\n");
 					printGameState(state);
 				}
@@ -294,7 +295,7 @@ void printBuild(Build build, int player) {
 				player+1, build.light, build.heavy, build.cavalry, build.workers);
 }
 
-void receiveAttack(AttackForce attackForce, DefenceForce defenceForce, State* state) {
+void receiveAttack() {
 	int type = 3;
 	int player;
 
@@ -340,7 +341,7 @@ void receiveAttack(AttackForce attackForce, DefenceForce defenceForce, State* st
 	exit(0);
 }
 
-void destruction(State* state) {
+void destruction() {
 	/* Destruction */
 	int destructor = msgctl(queueIdList->initialQ, IPC_RMID, 0);
 	if(destructor == -1) perror("destructor error");
