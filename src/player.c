@@ -5,6 +5,8 @@ int main() {
 	nonblock(NB_ENABLE);
 
 	strcpy(status, "");
+	int l;
+	for(l = 0; l < 4; l++) strcpy(infoLog[l], "");
 	key_t key = KEY;
 
 	int id = msgget(key, 0640);
@@ -59,6 +61,7 @@ int main() {
 		}
 		usleep(1);
 		i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
+		updateLog(data);
 		if(i != -1) update(data);
 	}
 
@@ -68,7 +71,20 @@ int main() {
 void clear() { printf("\033[H\033[J"); }
 
 void printGameState(Data data) {
-	printf("%s\nGAME STATE\n\tlight:\t\t%d\n\theavy:\t\t%d\n\tcavalry:\t%d\n\tworkers:\t%d\n\tpoints:\t\t%d\n\tresources:\t%d\n\tinfo:\t\t%s\n\tend:\t\t%c\n", status, data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources, data.info, data.end);
+	printf("%s\nGAME STATE\n\tlight:\t\t%d\n\theavy:\t\t%d\n\tcavalry:\t%d\n\tworkers:\t%d\n\tpoints:\t\t%d\n\tresources:\t%d\n", status, data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources);
+}
+
+void updateLog(Data data) {
+	if(strlen(data.info) > 1) {
+		strcpy(infoLog[0], infoLog[1]);
+		strcpy(infoLog[1], infoLog[2]);
+		strcpy(infoLog[2], infoLog[3]);
+		strcpy(infoLog[3], data.info);
+	}
+}
+
+void printLog() {
+	printf("%s\n%s\n%s\n%s\n", infoLog[0], infoLog[1], infoLog[2], infoLog[3]);
 }
 
 void printMenu() { printf("[1] BUILD [2] ATTACK\n"); }
@@ -174,5 +190,6 @@ void attacking(Data data, int id2) {
 void update(Data data) {
 	clear();
 	printGameState(data);
+	printLog();
 	printMenu();
 }

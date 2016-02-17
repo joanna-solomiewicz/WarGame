@@ -12,9 +12,12 @@
 #include <string.h>
 
 char status[111];
+char infoLog[4][111];
 
 void clear();
 void printGameState(Data data);
+void updateLog(Data data);
+void printLog();
 void printMenu();
 void sendBuildMessage(Build build, int id2);
 void building(Data data, int id2);
