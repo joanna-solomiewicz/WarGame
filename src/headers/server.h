@@ -58,6 +58,7 @@ AttackForce attackForce;
 DefenceForce defenceForce;
 State* state;
 struct sembuf sem;
+int semaphoreID;
 QueueId* queueIdList;
 
 Price setPrices();

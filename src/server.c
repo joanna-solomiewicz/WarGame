@@ -64,6 +64,7 @@ void initSemaphore() {
 		int j = semctl(semid, 0, SETVAL, 1);
 		if(j == -1) perror("semctl error");
 	}
+	semaphoreID = semid;
 }
 
 void P(int semid, struct sembuf sem) {
@@ -82,7 +83,7 @@ void V(int semid, struct sembuf sem) {
 	if(i == -1) perror("semop error");
 }
 
-void printGameState(State* state) {
+void printGameState() {
 	printf("\t\tP1\t\t\t\tP2\n\tlight:\t\t%d\t\tlight:\t\t%d\n\theavy:\t\t%d\t\theavy:\t\t%d\n\tcavalry:\t%d\t\tcavalry:\t%d\n\tworkers:\t%d\t\tworkers:\t%d\n\tpoints:\t\t%d\t\tpoints:\t\t%d\n\tresources:\t%d\t\tresources:\t%d\n",
 				state->light[0], state->light[1], state->heavy[0], state->heavy[1], state->cavalry[0], state->cavalry[1], 
 				state->workers[0], state->workers[1], state->points[0], state->points[1], state->resources[0], state->resources[1]);
@@ -108,15 +109,15 @@ void sendGameState(int player) {
 }
 
 void f() {
-	Init init;
-	init.mtype = 4;
-	init.nextMsg = KEYP1;
-	int i = msgsnd(queueIdList->initialQ, &init, sizeof(init.nextMsg), IPC_NOWAIT);
-	if(i == -1) perror("msgsnd error");
-	else {
-		printf("I've been killed !\n");
+//	Init init;
+//	init.mtype = 4;
+//	init.nextMsg = KEYP1;
+//	int i = msgsnd(queueIdList->initialQ, &init, sizeof(init.nextMsg), IPC_NOWAIT);
+//	if(i == -1) perror("msgsnd error");
+//	else {
+		printf("\nI've been killed !\n");
 		destruction();
-	}
+//	}
 
 	exit(0);
 }
@@ -207,6 +208,7 @@ void waitingForPlayers() {
 void initData() {
 	/* Sending 300 entities of resources to players */
 	int player;
+	P(semaphoreID, sem);
 	for(player = 0; player < 2; player++) {
 		state->light[player] = 0;
 		state->heavy[player] = 0;
@@ -218,6 +220,7 @@ void initData() {
 		
 		sendGameState(player);
 	}
+	V(semaphoreID, sem);
 }
 
 void sendResources() {
@@ -230,7 +233,9 @@ void sendResources() {
 		if(p2 == 0) player = 1;
 		else return;
 	}
+	P(semaphoreID, sem);
 	state->resources[player] += 50 + state->workers[player]*5;
+	V(semaphoreID, sem);
 	sendGameState(player);
 	exit(0);
 }
@@ -254,12 +259,16 @@ void receiveBuild() {
 	if(i != -1) {
 		if(build.light) {
 			if(build.light*prices.light <= state->resources[player]) {
+				P(semaphoreID, sem);
 				state->resources[player] -= build.light*prices.light;
+				V(semaphoreID, sem);
 				printBuild(build, player);
 				int i;
 				for(i = build.light; i > 0; i--) {
 					sleep(2);
+					P(semaphoreID, sem);
 					state->light[player]++;
+					V(semaphoreID, sem);
 					sendGameState(player);
 					printf("Light warrior has been recruited\n");
 					printGameState(state);
@@ -269,12 +278,16 @@ void receiveBuild() {
 		}
 		else if(build.heavy) {
 			if(build.heavy*prices.heavy <= state->resources[player]) {
+				P(semaphoreID, sem);
 				state->resources[player] -= build.heavy*prices.heavy;
+				V(semaphoreID, sem);
 				printBuild(build, player);
 				int i;
 				for(i = build.heavy; i > 0; i--) {
 					sleep(3);
+					P(semaphoreID, sem);
 					state->heavy[player]++;
+					V(semaphoreID, sem);
 					sendGameState(player);
 					printf("Heavy warrior has been recruited\n");
 					printGameState(state);
@@ -284,12 +297,16 @@ void receiveBuild() {
 		}
 		else if(build.cavalry) {
 			if(build.cavalry*prices.cavalry <= state->resources[player]) {
+				P(semaphoreID, sem);
 				state->resources[player] -= build.cavalry*prices.cavalry;
+				V(semaphoreID, sem);
 				printBuild(build, player);
 				int i;
 				for(i = build.cavalry; i > 0; i--) {
 					sleep(5);
+					P(semaphoreID, sem);
 					state->cavalry[player]++;
+					V(semaphoreID, sem);
 					sendGameState(player);
 					printf("Cavalryman has been recruited\n");
 					printGameState(state);
@@ -299,12 +316,16 @@ void receiveBuild() {
 		}
 		else if(build.workers) {
 			if(build.workers*prices.workers <= state->resources[player]) {
+				P(semaphoreID, sem);
 				state->resources[player] -= build.workers*prices.workers;
+				V(semaphoreID, sem);
 				printBuild(build, player);
 				int i;
 				for(i = build.workers; i > 0; i--) {
 					sleep(2);
+					P(semaphoreID, sem);
 					state->workers[player]++;
+					V(semaphoreID, sem);
 					sendGameState(player);
 					printf("Worker has been recruited\n");
 					printGameState(state);
@@ -344,22 +365,30 @@ void receiveAttack() {
 		int attackF = attack.light*attackForce.light + attack.heavy*attackForce.heavy + attack.cavalry*attackForce.cavalry;
 		int defenceF = state->light[enemy]*defenceForce.light + state->heavy[enemy]*defenceForce.heavy + state->cavalry[enemy]*defenceForce.cavalry;
 		if(attackF-defenceF > 0) {
+			P(semaphoreID, sem);
 			state->light[enemy] = state->heavy[enemy] = state->cavalry[enemy] = 0;
+			V(semaphoreID, sem);
 			printf("Player #%d has won the battle\n", player+1);
+			P(semaphoreID, sem);
 			state->points[player]++;
+			V(semaphoreID, sem);
 		}
 		else {
+			P(semaphoreID, sem);
 			state->light[enemy] -= state->light[enemy]*attackF/defenceF;
 			state->heavy[enemy] -= state->heavy[enemy]*attackF/defenceF;
 			state->cavalry[enemy] -= state->cavalry[enemy]*attackF/defenceF;
+			V(semaphoreID, sem);
 		}
 		attackF = state->light[enemy]*attackForce.light + state->heavy[enemy]*attackForce.heavy + state->cavalry[enemy]*attackForce.cavalry;
 		defenceF = attack.light*defenceForce.light + attack.heavy*defenceForce.heavy + attack.cavalry*defenceForce.cavalry;
 		if(attackF-defenceF > 0) state->light[player] = state->heavy[player] = state->cavalry[player] = 0;
 		else {
+			P(semaphoreID, sem);
 			state->light[player] -= attack.light*attackF/defenceF;
 			state->heavy[player] -= attack.heavy*attackF/defenceF;
 			state->cavalry[player] -= attack.cavalry*attackF/defenceF;
+			V(semaphoreID, sem);
 		}
 		printf("End of attack by player #%d\n", player+1);
 		printGameState(state);
