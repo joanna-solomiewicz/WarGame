@@ -14,6 +14,13 @@
 #define KEYP2 11111111 
 #define KEYMEM 96
 
+typedef struct Price {
+	int light;
+	int heavy;
+	int cavalry;
+	int workers;
+} Price;
+
 typedef struct State {
 	int light[2];
 	int heavy[2];
@@ -33,18 +40,21 @@ typedef struct QueueId {
 QueueId* queueIdList;
 State* state;
 
+Price setPrices();
 void initStateMemory();
 void sendGameState(State* state, int player);
 void f();
 void initQueues();
 void initConnection();
 void initData(State* state);
-void receiveBuild();
-void printBuild(int player);
+void receiveBuild(Price prices, State* state);
+void printBuild(Build build, int player);
 void destruction(State* state);
 
 int main() {
 	
+	Price prices = setPrices();
+
 	initStateMemory();
 	initQueues();
 	signal(SIGINT, f);
@@ -59,8 +69,17 @@ int main() {
 			sendGameState(state, player);
 		}
 
-		receiveBuild();
+		receiveBuild(prices, state);
 	}
+}
+
+Price setPrices() {
+	Price price;
+	price.light = 100;
+	price.heavy = 250;
+	price.cavalry = 550;
+	price.workers = 150;
+	return price;
 }
 
 void initStateMemory() {
@@ -196,27 +215,66 @@ void initData(State* state) {
 	}
 }
 
-void receiveBuild() {
-	Build build;
+void receiveBuild(Price prices, State* state) {
 	long type = 2;
 	int player;
 	for(player = 0; player < 2; player++) {
+		Build build;
 		int i;
 		if(!player) i = msgrcv(queueIdList->player1Q, &build, sizeof(Build) - sizeof(build.mtype), type, IPC_NOWAIT);
 		else i = msgrcv(queueIdList->player2Q, &build, sizeof(Build) - sizeof(build.mtype), type, IPC_NOWAIT);
 		if(i != -1) {
-			state->light[player] += build.light;
-			state->heavy[player] += build.heavy;
-			state->cavalry[player] += build.cavalry;
-			state->workers[player] += build.workers;
-			printBuild(player);
+			if(build.light) {
+				printBuild(build, player);
+				if(build.light*prices.light <= state->resources[player]) {
+					int i;
+					for(i = build.light; i > 0; i--) {
+						sleep(2);
+						state->light[player]++;
+						sendGameState(state, player);
+					}
+				}
+			}
+			else if(build.heavy) {
+				printBuild(build, player);
+				if(build.heavy*prices.heavy <= state->resources[player]) {
+					int i;
+					for(i = build.heavy; i > 0; i--) {
+						sleep(3);
+						state->heavy[player]++;
+						sendGameState(state, player);
+					}
+				}
+			}
+			else if(build.cavalry) {
+				printBuild(build, player);
+				if(build.cavalry*prices.cavalry <= state->resources[player]) {
+					int i;
+					for(i = build.cavalry; i > 0; i--) {
+						sleep(5);
+						state->cavalry[player]++;
+						sendGameState(state, player);
+					}
+				}
+			}
+			else if(build.workers) {
+				printBuild(build, player);
+				if(build.workers*prices.workers <= state->resources[player]) {
+					int i;
+					for(i = build.workers; i > 0; i--) {
+						sleep(2);
+						state->workers[player]++;
+						sendGameState(state, player);
+					}
+				}
+			}
 		}
 	}
 }
 
-void printBuild(int player) {
+void printBuild(Build build, int player) {
 	printf("Player #%d: %d light, %d heavy, %d cavalry, %d workers\n", 
-				player+1, state->light[player], state->heavy[player], state->cavalry[player], state->workers[player]);
+				player+1, build.light, build.heavy, build.cavalry, build.workers);
 }
 
 void destruction(State* state) {
