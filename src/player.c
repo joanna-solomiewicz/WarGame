@@ -141,10 +141,7 @@ void building(Data data, int id2) {
 		}
 		else if( c == '5' ) { stop = 0; }
 
-		clear();
-		printGameState(data);
-		printMenu();
-
+		update(data);
 		usleep(1);
 	}
 }
@@ -158,10 +155,48 @@ void sendAttackMessage(Attack attack, int id2) {
 }
 
 void attacking(Data data, int id2) {
+	update(data);
+	printf("How many warriors would You like to send to war?\n");
+
 	Attack attack;
 	attack.mtype = 3;
-	attack.light = attack.heavy = attack.cavalry = 1;
+	attack.light = attack.heavy = attack.cavalry = 0;
+	int i;
+	for(i = 0; i < 3; i++) {
+		switch(i) {
+			case 0:
+				printf("\tHow many light warriors? (0-9)\n");
+				break;
+			case 1:
+				printf("\tHow many heavy warriors? (0-9)\n");
+				break;
+			case 2:
+				printf("\tHow many cavalryman? (0-9)\n");
+				break;
+		}
+		int stop = 1;
+		while(stop) {
+			char c;
+			c = getchar();
+			if(c >= '0' && c <= '9') {
+				switch(i) {
+					case 0:
+						attack.light = (int)c-48;
+						break;
+					case 1:
+						attack.heavy = (int)c-48;
+						break;
+					case 2:
+						attack.cavalry = (int)c-48;
+						break;
+				}
+				stop = 0;
+			}
+		}
+	}
 	sendAttackMessage(attack, id2);
+	update(data);
+	usleep(1);
 }
 
 void update(Data data) {
