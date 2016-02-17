@@ -4,6 +4,7 @@ int main() {
 
 	nonblock(NB_ENABLE);
 
+	strcpy(status, "");
 	key_t key = KEY;
 
 	int id = msgget(key, 0640);
@@ -43,6 +44,7 @@ int main() {
 	} while(i == -1);
 	printf("Update received\n");
 	printGameState(data);
+	strcpy(status, data.info);
 
 	/* Printing game state with terminal clearing */
 	clear();
@@ -66,8 +68,7 @@ int main() {
 void clear() { printf("\033[H\033[J"); }
 
 void printGameState(Data data) {
-	printf("GAME STATE\n\tlight:\t\t%d\n\theavy:\t\t%d\n\tcavalry:\t%d\n\tworkers:\t%d\n\tpoints:\t\t%d\n\tresources:\t%d\n\tinfo:\t\t%s\n\tend:\t\t%c\n", 
-							data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources, data.info, data.end);
+	printf("%s\nGAME STATE\n\tlight:\t\t%d\n\theavy:\t\t%d\n\tcavalry:\t%d\n\tworkers:\t%d\n\tpoints:\t\t%d\n\tresources:\t%d\n\tinfo:\t\t%s\n\tend:\t\t%c\n", status, data.light, data.heavy, data.cavalry, data.workers, data.points, data.resources, data.info, data.end);
 }
 
 void printMenu() { printf("[1] BUILD [2] ATTACK\n"); }

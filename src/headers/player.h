@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+
+char status[111];
 
 void clear();
 void printGameState(Data data);
