@@ -50,6 +50,7 @@ void waitingForPlayers();
 void initData(State* state);
 void receiveBuild(Price prices, State* state);
 void printBuild(Build build, int player);
+void receiveAttack();
 void destruction(State* state);
 
 int main() {
@@ -72,6 +73,7 @@ int main() {
 		}
 
 		receiveBuild(prices, state);
+		receiveAttack();
 	}
 }
 
@@ -303,6 +305,20 @@ void receiveBuild(Price prices, State* state) {
 void printBuild(Build build, int player) {
 	printf("Player #%d: %d light, %d heavy, %d cavalry, %d workers\n", 
 				player+1, build.light, build.heavy, build.cavalry, build.workers);
+}
+
+void receiveAttack() {
+	Attack attack;
+	int i;
+	int player;
+	int type = 3;
+	for(player = 0; player < 2; player++) {
+		if(!player) i = msgrcv(queueIdList->player1Q, &attack, sizeof(Attack) - sizeof(attack.mtype), type, IPC_NOWAIT);
+		else i = msgrcv(queueIdList->player2Q, &attack, sizeof(Attack) - sizeof(attack.mtype), type, IPC_NOWAIT);
+		if(i != -1) {
+			printf("Attack received from player #%d\n", player+1);
+		}
+	}
 }
 
 void destruction(State* state) {
