@@ -4,6 +4,7 @@ int main() {
 	
 	initConsts();
 	initStateMemory();
+	initSemaphore();
 	initQueues();
 	signal(SIGINT, f);
 	initConnection();
@@ -54,6 +55,31 @@ void initStateMemory() {
 	int shmid = shmget(key, sizeof(State), IPC_CREAT | 0640);
 	if(shmid == -1) perror("shmget error");
 	state = (State*)shmat(shmid, NULL, 0);
+}
+
+void initSemaphore() {
+	int semid = semget(KEYSEM, 1, IPC_CREAT | 0640);
+	if(semid == -1) perror("semget error");
+	else {
+		int j = semctl(semid, 0, SETVAL, 1);
+		if(j == -1) perror("semctl error");
+	}
+}
+
+void P(int semid, struct sembuf sem) {
+	sem.sem_num = 0;
+	sem.sem_op = -1;
+	sem.sem_flg = 0;
+	int i = semop(semid, &sem, 1);
+	if(i == -1) perror("semop error");
+}
+
+void V(int semid, struct sembuf sem) {
+	sem.sem_num = 0;
+	sem.sem_op = 1;
+	sem.sem_flg = 0;
+	int i = semop(semid, &sem, 1);
+	if(i == -1) perror("semop error");
 }
 
 void printGameState(State* state) {

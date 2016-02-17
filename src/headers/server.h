@@ -6,6 +6,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/shm.h>
+#include <sys/sem.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -15,6 +16,7 @@
 #define KEYP1 31415926 
 #define KEYP2 11111111 
 #define KEYMEM 96
+#define KEYSEM 13
 
 typedef struct Price {
 	int light;
@@ -51,17 +53,21 @@ typedef struct QueueId {
 	int player2Q;
 } QueueId;
 
-QueueId* queueIdList;
-State* state;
 Price prices;
 AttackForce attackForce;
 DefenceForce defenceForce;
+State* state;
+struct sembuf sem;
+QueueId* queueIdList;
 
 Price setPrices();
 AttackForce setAttackForce();
 DefenceForce setDefenceForce();
 void initConsts();
 void initStateMemory();
+void initSemaphore();
+void P(int semid, struct sembuf sem);
+void V(int semid, struct sembuf sem);
 void sendGameState(int player);
 void f();
 void initQueues();
