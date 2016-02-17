@@ -126,6 +126,11 @@ void initStateMemory() {
 	state = (State*)shmat(shmid, NULL, 0);
 }
 
+void printGameState(State* state) {
+	printf("\t\tP1\t\t\t\tP2\n\tlight:\t\t%d\t\tlight:\t\t%d\n\theavy:\t\t%d\t\theavy:\t\t%d\n\tcavalry:\t%d\t\tcavalry:\t%d\n\tworkers:\t%d\t\tworkers:\t%d\n\tpoints:\t\t%d\t\tpoints:\t\t%d\n\tresources:\t%d\t\tresources:\t%d\n",
+				state->light[0], state->light[1], state->heavy[0], state->heavy[1], state->cavalry[0], state->cavalry[1], 
+				state->workers[0], state->workers[1], state->points[0], state->points[1], state->resources[0], state->resources[1]);
+}
 void sendGameState(State* state, int player) {
 	Data data;
 	if(!player) data.mtype = 1;
@@ -173,11 +178,11 @@ void initQueues() {
 		if(id == -1) perror("msgget error");
 	}
 	else {
-		printf("Another server already working\n");
-		exit(0);
-//		del = msgctl(id, IPC_RMID, 0);
-//		if(del == -1) perror("msgctl error");
-//		id = msgget(key, IPC_CREAT | 0640);
+//		printf("Another server already working\n");
+//		exit(0);
+		del = msgctl(id, IPC_RMID, 0);
+		if(del == -1) perror("msgctl error");
+		id = msgget(key, IPC_CREAT | 0640);
 	}
 
 	/* Creating private queue for player #1 */
@@ -287,6 +292,7 @@ void receiveBuild(Price prices, State* state) {
 					state->light[player]++;
 					sendGameState(state, player);
 					printf("Light warrior has been recruited\n");
+					printGameState(state);
 				}
 			}
 			else { printf("Player #%d, not enough resources\n", player+1); }
@@ -300,6 +306,7 @@ void receiveBuild(Price prices, State* state) {
 					state->heavy[player]++;
 					sendGameState(state, player);
 					printf("Heavy warrior has been recruited\n");
+					printGameState(state);
 				}
 			}
 			else { printf("Player #%d, not enough resources\n", player+1); }
@@ -313,6 +320,7 @@ void receiveBuild(Price prices, State* state) {
 					state->cavalry[player]++;
 					sendGameState(state, player);
 					printf("Cavalryman has been recruited\n");
+					printGameState(state);
 				}
 			}
 			else { printf("Player #%d, not enough resources\n", player+1); }
@@ -326,6 +334,7 @@ void receiveBuild(Price prices, State* state) {
 					state->workers[player]++;
 					sendGameState(state, player);
 					printf("Worker has been recruited\n");
+					printGameState(state);
 				}
 			}
 			else { printf("Player #%d, not enough resources\n", player+1); }
@@ -357,10 +366,15 @@ void receiveAttack(AttackForce attackForce, DefenceForce defenceForce, State* st
 	else i = msgrcv(queueIdList->player2Q, &attack, sizeof(Attack) - sizeof(attack.mtype), type, IPC_NOWAIT);
 	if(i != -1) {
 		printf("Attack received from player #%d\n", player+1);
+		sleep(5);
 		int enemy = (player+1)%2;
 		int attackF = attack.light*attackForce.light + attack.heavy*attackForce.heavy + attack.cavalry*attackForce.cavalry;
 		int defenceF = state->light[enemy]*defenceForce.light + state->heavy[enemy]*defenceForce.heavy + state->cavalry[enemy]*defenceForce.cavalry;
-		if(attackF-defenceF > 0) state->light[enemy] = state->heavy[enemy] = state->cavalry[enemy] = 0;
+		if(attackF-defenceF > 0) {
+			state->light[enemy] = state->heavy[enemy] = state->cavalry[enemy] = 0;
+			printf("Player #%d has won the battle\n", player+1);
+			state->points[player]++;
+		}
 		else {
 			state->light[enemy] -= state->light[enemy]*attackF/defenceF;
 			state->heavy[enemy] -= state->heavy[enemy]*attackF/defenceF;
@@ -370,12 +384,12 @@ void receiveAttack(AttackForce attackForce, DefenceForce defenceForce, State* st
 		defenceF = attack.light*defenceForce.light + attack.heavy*defenceForce.heavy + attack.cavalry*defenceForce.cavalry;
 		if(attackF-defenceF > 0) state->light[player] = state->heavy[player] = state->cavalry[player] = 0;
 		else {
-			state->light[player] -= state->light[player]*attackF/defenceF;
-			state->heavy[player] -= state->heavy[player]*attackF/defenceF;
-			state->cavalry[player] -= state->cavalry[player]*attackF/defenceF;
+			state->light[player] -= attack.light*attackF/defenceF;
+			state->heavy[player] -= attack.heavy*attackF/defenceF;
+			state->cavalry[player] -= attack.cavalry*attackF/defenceF;
 		}
-		sleep(5);
 		printf("End of attack by player #%d\n", player+1);
+		printGameState(state);
 	}
 	exit(0);
 }
