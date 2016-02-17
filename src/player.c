@@ -13,6 +13,8 @@ void printGameState(Data data);
 void printMenu();
 void sendBuildMessage(Build build, int id2);
 void building(Data data, int id2);
+void sendAttackMessage(Attack attack, int id2);
+void attacking(Data data, int id2);
 void update(Data data);
 
 int main() {
@@ -69,7 +71,8 @@ int main() {
 			c = getchar();
 			if(c == '1') building(data, id2);
 			else if(c == '2') {
-				printf("Attacking!\n");
+				attacking(data, id2);
+//				printf("Attacking!\n");
 				sleep(5);
 			}
 		}
@@ -144,6 +147,21 @@ void building(Data data, int id2) {
 
 		usleep(1);
 	}
+}
+
+void sendAttackMessage(Attack attack, int id2) {
+	int i = msgsnd(id2, &attack, sizeof(Attack) - sizeof(attack.mtype), 0);
+	if(i == -1) perror("msgrcv error");
+	else printf("Attack sent to server:\n\tlight: %d\n\theavy: %d\n\tcavalry: %d\n",
+							attack.light, attack.heavy, attack.cavalry);
+	sleep(1);
+}
+
+void attacking(Data data, int id2) {
+	Attack attack;
+	attack.mtype = 3;
+	attack.light = attack.heavy = attack.cavalry = 1;
+	sendAttackMessage(attack, id2);
 }
 
 void update(Data data) {
