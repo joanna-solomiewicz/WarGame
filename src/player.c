@@ -1,21 +1,4 @@
-#include "headers/struct.h"
-#include "headers/keyHandling.h"
-
-#include <sys/types.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-void clear();
-void printGameState(Data data);
-void printMenu();
-void sendBuildMessage(Build build, int id2);
-void building(Data data, int id2);
-void sendAttackMessage(Attack attack, int id2);
-void attacking(Data data, int id2);
-void update(Data data);
+#include "headers/player.h"
 
 int main() {
 
