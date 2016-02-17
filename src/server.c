@@ -62,6 +62,7 @@ void initQueues();
 void initConnection();
 void waitingForPlayers();
 void initData(State* state);
+void sendResources(State* state);
 void receiveBuild(Price prices, State* state);
 void printBuild(Build build, int player);
 void receiveAttack(AttackForce attackForce, DefenceForce defenceForce, State* state);
@@ -81,13 +82,7 @@ int main() {
 	initData(state);
 
 	while(1) {
-		sleep(1);
-		int player;
-		for(player = 0; player < 2; player++) {
-			state->resources[player] += 50 + state->workers[player]*5;
-			sendGameState(state, player);
-		}
-
+		sendResources(state);
 		receiveBuild(prices, state);
 		receiveAttack(attackForce, defenceForce, state);
 	}
@@ -264,6 +259,21 @@ void initData(State* state) {
 		
 		sendGameState(state, player);
 	}
+}
+
+void sendResources(State* state) {
+	sleep(1);
+	int player;
+	int p1 = fork();
+	if(p1 == 0) player = 0;
+	else {
+		int p2 = fork();
+		if(p2 == 0) player = 1;
+		else return;
+	}
+	state->resources[player] += 50 + state->workers[player]*5;
+	sendGameState(state, player);
+	exit(0);
 }
 
 void receiveBuild(Price prices, State* state) {
