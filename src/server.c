@@ -399,42 +399,45 @@ void receiveAttack() {
 	if(!player) i = msgrcv(queueIdList->player1Q, &attack, sizeof(Attack) - sizeof(attack.mtype), type, IPC_NOWAIT);
 	else i = msgrcv(queueIdList->player2Q, &attack, sizeof(Attack) - sizeof(attack.mtype), type, IPC_NOWAIT);
 	if(i != -1) {
-		/* Subtract the attacking warriors */
-		P(semaphoreID, sem);
-		state->light[player] -= attack.light;
-		state->heavy[player] -= attack.heavy;
-		state->cavalry[player] -= attack.cavalry;
-		V(semaphoreID, sem);
-		sleep(5);
-		int enemy = (player+1)%2;
-		int aAttack = attack.light*attackForce.light + attack.heavy*attackForce.heavy + attack.cavalry*attackForce.cavalry;
-		int aDefence = attack.light*defenceForce.light + attack.heavy*defenceForce.heavy + attack.cavalry*defenceForce.cavalry;
-		int dAttack = state->light[enemy]*attackForce.light + state->heavy[enemy]*attackForce.heavy + state->cavalry[enemy]*attackForce.cavalry;
-		int dDefence = state->light[enemy]*defenceForce.light + state->heavy[enemy]*defenceForce.heavy + state->cavalry[enemy]*defenceForce.cavalry;
+		if(state->light[player] >= attack.light && state->heavy[player] >= attack.heavy && state->cavalry[player] >= attack.cavalry) {
+			/* Subtract the attacking warriors */
+			P(semaphoreID, sem);
+			state->light[player] -= attack.light;
+			state->heavy[player] -= attack.heavy;
+			state->cavalry[player] -= attack.cavalry;
+			V(semaphoreID, sem);
+			sleep(5);
+			int enemy = (player+1)%2;
+			int aAttack = attack.light*attackForce.light + attack.heavy*attackForce.heavy + attack.cavalry*attackForce.cavalry;
+			int aDefence = attack.light*defenceForce.light + attack.heavy*defenceForce.heavy + attack.cavalry*defenceForce.cavalry;
+			int dAttack = state->light[enemy]*attackForce.light + state->heavy[enemy]*attackForce.heavy + state->cavalry[enemy]*attackForce.cavalry;
+			int dDefence = state->light[enemy]*defenceForce.light + state->heavy[enemy]*defenceForce.heavy + state->cavalry[enemy]*defenceForce.cavalry;
 
-		if(aAttack > dDefence) {
-			P(semaphoreID, sem);
-			state->light[enemy] = state->heavy[enemy] = state->cavalry[enemy] = 0;
-			state->points[player]++;
-			V(semaphoreID, sem);
+			if(aAttack > dDefence) {
+				P(semaphoreID, sem);
+				state->light[enemy] = state->heavy[enemy] = state->cavalry[enemy] = 0;
+				state->points[player]++;
+				V(semaphoreID, sem);
+			}
+			else {
+				P(semaphoreID, sem);
+				state->light[enemy] -= state->light[enemy]*aAttack/dDefence;
+				state->heavy[enemy] -= state->heavy[enemy]*aAttack/dDefence;
+				state->cavalry[enemy] -= state->cavalry[enemy]*aAttack/dDefence;
+				V(semaphoreID, sem);
+			}
+			if(dAttack > aDefence) {
+				attack.light = attack.heavy = attack.cavalry = 0;
+			}
+			else {
+				P(semaphoreID, sem);
+				state->light[player] += attack.light - attack.light*dAttack/aDefence;
+				state->heavy[player] += attack.heavy - attack.heavy*dAttack/aDefence;
+				state->cavalry[player] += attack.cavalry - attack.cavalry*dAttack/aDefence;
+				V(semaphoreID, sem);
+			}
 		}
-		else {
-			P(semaphoreID, sem);
-			state->light[enemy] -= state->light[enemy]*aAttack/dDefence;
-			state->heavy[enemy] -= state->heavy[enemy]*aAttack/dDefence;
-			state->cavalry[enemy] -= state->cavalry[enemy]*aAttack/dDefence;
-			V(semaphoreID, sem);
-		}
-		if(dAttack > aDefence) {
-			attack.light = attack.heavy = attack.cavalry = 0;
-		}
-		else {
-			P(semaphoreID, sem);
-			state->light[player] += attack.light - attack.light*dAttack/aDefence;
-			state->heavy[player] += attack.heavy - attack.heavy*dAttack/aDefence;
-			state->cavalry[player] += attack.cavalry - attack.cavalry*dAttack/aDefence;
-			V(semaphoreID, sem);
-		}
+		else sendGameState(player, "NOT ENOUGH WARRIORS TO ATTACK\0");
 	}
 	exit(0);
 }
