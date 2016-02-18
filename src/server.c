@@ -23,6 +23,14 @@ int main() {
 	}
 }
 
+void initConsts() {
+	prices = setPrices();
+	attackForce = setAttackForce();
+	defenceForce = setDefenceForce();
+	beatSkips[0] = 0;
+	beatSkips[1] = 0;
+}
+
 Price setPrices() {
 	Price price;
 	price.light = 100;
@@ -46,14 +54,6 @@ DefenceForce setDefenceForce() {
 	defenceForce.heavy = 3;
 	defenceForce.cavalry = 1.2;
 	return defenceForce;
-}
-
-void initConsts() {
-	prices = setPrices();
-	attackForce = setAttackForce();
-	defenceForce = setDefenceForce();
-	beatSkips[0] = 0;
-	beatSkips[1] = 0;
 }
 
 void initStateMemory() {
@@ -88,50 +88,6 @@ void V(int semid, struct sembuf sem) {
 	sem.sem_flg = 0;
 	int i = semop(semid, &sem, 1);
 	if(i == -1) perror("semop error");
-}
-
-void clear() { printf("\033[H\033[J"); }
-
-void printGameState() {
-	printf(	"\n\t\t\t  WAR GAME STATE"
-				"\n\t\tP1\t\t\t\tP2"
-				"\n\t~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-				"\n\tlight\t\t%d\t|\tlight\t\t%d"
-				"\n\theavy\t\t%d\t|\theavy\t\t%d"
-				"\n\tcavalry\t\t%d\t|\tcavalry\t\t%d"
-				"\n\tworkers\t\t%d\t|\tworkers\t\t%d"
-				"\n\tpoints\t\t%d\t|\tpoints\t\t%d"
-				"\n\tresources\t%d\t|\tresources\t%d\n",
-				state->light[0], state->light[1], state->heavy[0], state->heavy[1], state->cavalry[0], state->cavalry[1], 
-				state->workers[0], state->workers[1], state->points[0], state->points[1], state->resources[0], state->resources[1]);
-}
-
-void sendGameState(int player, char info[]) {
-	Data data;
-	if(!player) data.mtype = 1;
-	else data.mtype = 1;
-	data.light = state->light[player];
-	data.heavy = state->heavy[player];
-	data.cavalry = state->cavalry[player];
-	data.workers = state->workers[player];
-	data.points = state->points[player];
-	data.resources = state->resources[player];
-	strcpy(data.info, info);
-	data.end = state->end;
-	
-	int i;
-	if(!player) i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
-	else i = msgsnd(queueIdList->player2Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
-	if(i == -1) perror("msgsnd error");
-}
-
-void f() {
-	printf("\nI've been killed !\n");
-	destruction();
-	int i = kill(0, SIGKILL);
-	if(i == -1) perror("kill error");
-
-	exit(0);
 }
 
 void initQueues() {
@@ -188,6 +144,28 @@ void initQueues() {
 	queueIdList->player2Q = idP2;
 }
 
+void f() {
+	printf("\nI've been killed !\n");
+	destruction();
+	int i = kill(0, SIGKILL);
+	if(i == -1) perror("kill error");
+
+	exit(0);
+}
+
+void destruction() {
+	/* Destruction */
+	int destructor = msgctl(queueIdList->initialQ, IPC_RMID, 0);
+	if(destructor == -1) perror("destructor error");
+
+	destructor = msgctl(queueIdList->player1Q, IPC_RMID, 0);
+	if(destructor == -1) perror("destructor error");
+
+	destructor = msgctl(queueIdList->player2Q, IPC_RMID, 0);
+	if(destructor == -1) perror("destructor error");
+
+	shmdt(state);
+}
 
 void initConnection() {
 	/* Sending private queues' keys */
@@ -235,6 +213,25 @@ void initData() {
 		else sendGameState(player, "I'M PLAYER #2\0");
 	}
 	V(semaphoreID, sem);
+}
+
+void sendGameState(int player, char info[]) {
+	Data data;
+	if(!player) data.mtype = 1;
+	else data.mtype = 1;
+	data.light = state->light[player];
+	data.heavy = state->heavy[player];
+	data.cavalry = state->cavalry[player];
+	data.workers = state->workers[player];
+	data.points = state->points[player];
+	data.resources = state->resources[player];
+	strcpy(data.info, info);
+	data.end = state->end;
+	
+	int i;
+	if(!player) i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
+	else i = msgsnd(queueIdList->player2Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
+	if(i == -1) perror("msgsnd error");
 }
 
 void heartbeat() {
@@ -333,7 +330,6 @@ void receiveBuild() {
 					V(semaphoreID, sem);
 					sendGameState(player, "Light warrior recruited\0");
 					printf("Light warrior has been recruited\n");
-//					printGameState(state);
 				}
 			}
 			else { 
@@ -355,7 +351,6 @@ void receiveBuild() {
 					V(semaphoreID, sem);
 					sendGameState(player, "Heavy warrior recruited\0");
 					printf("Heavy warrior has been recruited\n");
-//					printGameState(state);
 				}
 			}
 			else { 
@@ -377,7 +372,6 @@ void receiveBuild() {
 					V(semaphoreID, sem);
 					sendGameState(player, "Cavalryman recruited\0");
 					printf("Cavalryman has been recruited\n");
-//					printGameState(state);
 				}
 			}
 			else { 
@@ -399,7 +393,6 @@ void receiveBuild() {
 					V(semaphoreID, sem);
 					sendGameState(player, "Worker recruited\0");
 					printf("Worker has been recruited\n");
-//					printGameState(state);
 				}
 			}
 			else { 
@@ -475,25 +468,23 @@ void receiveAttack() {
 			V(semaphoreID, sem);
 		}
 		printf("End of attack by player #%d\n", player+1);
-//		printGameState(state);
 	}
 	exit(0);
 }
 
-void destruction() {
-	/* Destruction */
-	int destructor = msgctl(queueIdList->initialQ, IPC_RMID, 0);
-	if(destructor == -1) perror("destructor error");
-//	else printf("Queue #1 key = %d destructed\n", KEY);
+void clear() { printf("\033[H\033[J"); }
 
-	destructor = msgctl(queueIdList->player1Q, IPC_RMID, 0);
-	if(destructor == -1) perror("destructor error");
-//	else printf("Queue #2 key = %d destructed\n", KEYP1);
-
-	destructor = msgctl(queueIdList->player2Q, IPC_RMID, 0);
-	if(destructor == -1) perror("destructor error");
-//	else printf("Queue #3 key = %d destructed\n", KEYP2);
-
-	shmdt(state);
+void printGameState() {
+	printf(	"\n\t\t\t  WAR GAME STATE"
+				"\n\t\tP1\t\t\t\tP2"
+				"\n\t~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+				"\n\tlight\t\t%d\t|\tlight\t\t%d"
+				"\n\theavy\t\t%d\t|\theavy\t\t%d"
+				"\n\tcavalry\t\t%d\t|\tcavalry\t\t%d"
+				"\n\tworkers\t\t%d\t|\tworkers\t\t%d"
+				"\n\tpoints\t\t%d\t|\tpoints\t\t%d"
+				"\n\tresources\t%d\t|\tresources\t%d\n",
+				state->light[0], state->light[1], state->heavy[0], state->heavy[1], state->cavalry[0], state->cavalry[1], 
+				state->workers[0], state->workers[1], state->points[0], state->points[1], state->resources[0], state->resources[1]);
 }
 
