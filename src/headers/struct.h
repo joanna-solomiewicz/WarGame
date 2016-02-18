@@ -36,5 +36,4 @@ typedef struct Attack {
 
 typedef struct Alive {
 	long mtype;
-	char lol;
 } Alive;

@@ -210,12 +210,11 @@ void heartbeat(int id2) {
 		sleep(2);
 
 		alive.mtype = 4;
-		alive.lol = 'k';
-		int i = msgsnd(id2, &alive, sizeof(alive.lol), IPC_NOWAIT);
+		int i = msgsnd(id2, &alive, 0, IPC_NOWAIT);
 //		if(i == -1) perror("msgsnd error");
 
 		int type = 5;
-		i = msgrcv(id2, &alive, sizeof(alive.lol), type, IPC_NOWAIT);
+		i = msgrcv(id2, &alive, 0, type, IPC_NOWAIT);
 		if(i == -1) beatSkips++;
 
 		if(beatSkips >= 3) { 

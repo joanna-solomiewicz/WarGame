@@ -250,18 +250,17 @@ void heartbeat() {
 		sleep(2);
 
 		alive.mtype = 5;
-		alive.lol = 's';
 		int i,j;
 		int type = 4;
 		if(!player) {
-			i = msgsnd(queueIdList->player1Q, &alive, sizeof(alive.lol), IPC_NOWAIT);
+			i = msgsnd(queueIdList->player1Q, &alive, 0, IPC_NOWAIT);
 			if(i == -1) perror("msgsnd error");
-			j = msgrcv(queueIdList->player1Q, &alive, sizeof(alive.lol), type, IPC_NOWAIT);
+			j = msgrcv(queueIdList->player1Q, &alive, 0, type, IPC_NOWAIT);
 		}
 		else {
-			i = msgsnd(queueIdList->player2Q, &alive, sizeof(alive.lol), IPC_NOWAIT);
+			i = msgsnd(queueIdList->player2Q, &alive, 0, IPC_NOWAIT);
 			if(i == -1) perror("msgsnd error");
-			j = msgrcv(queueIdList->player2Q, &alive, sizeof(alive.lol), type, IPC_NOWAIT);
+			j = msgrcv(queueIdList->player2Q, &alive, 0, type, IPC_NOWAIT);
 		}
 
 		if(j == -1) beatSkips[player]++; 
