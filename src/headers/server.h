@@ -81,7 +81,6 @@ void initData();
 void heartbeat();
 void sendResources();
 void receiveBuild();
-void printBuild(Build build, int player);
 void receiveAttack();
 void destruction();
 

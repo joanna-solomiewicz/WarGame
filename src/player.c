@@ -47,14 +47,12 @@ int main() {
 		i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
 	} while(i == -1);
 	printf("Update received\n");
-	printGameState(data);
 	strcpy(status, data.info);
+	printGameState(data);
 	printLog();
 
 	/* Printing game state with terminal clearing */
-	clear();
-	printGameState(data);
-	printMenu();
+	update(data);
 	heartbeat(id2);
 	while(1) {
 		char c;
@@ -65,8 +63,10 @@ int main() {
 		}
 		usleep(1);
 		i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
-		updateLog(data);
-		if(i != -1) update(data);
+		if(i != -1) {
+			updateLog(data);
+			update(data);
+		}
 	}
 
 	nonblock(NB_DISABLE);
