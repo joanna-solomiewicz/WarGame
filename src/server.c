@@ -314,12 +314,14 @@ void receiveBuild() {
 	if(!player) i = msgrcv(queueIdList->player1Q, &build, sizeof(Build) - sizeof(build.mtype), type, IPC_NOWAIT);
 	else i = msgrcv(queueIdList->player2Q, &build, sizeof(Build) - sizeof(build.mtype), type, IPC_NOWAIT);
 	if(i != -1) {
-		if(build.light) {
-			if(build.light*prices.light <= state->resources[player]) {
+		if(build.light*prices.light + build.heavy*prices.heavy + build.cavalry*prices.cavalry + 
+				build.workers*prices.workers <= state->resources[player] ) {
 				P(semaphoreID, sem);
 				state->resources[player] -= build.light*prices.light;
+				state->resources[player] -= build.heavy*prices.heavy;
+				state->resources[player] -= build.cavalry*prices.cavalry;
+				state->resources[player] -= build.workers*prices.workers;
 				V(semaphoreID, sem);
-				int i;
 				for(i = build.light; i > 0; i--) {
 					sleep(2);
 					P(semaphoreID, sem);
@@ -327,15 +329,6 @@ void receiveBuild() {
 					V(semaphoreID, sem);
 					sendGameState(player, "Light warrior recruited\0");
 				}
-			}
-			else sendGameState(player, "Not enough resources to recruit\0");
-		}
-		else if(build.heavy) {
-			if(build.heavy*prices.heavy <= state->resources[player]) {
-				P(semaphoreID, sem);
-				state->resources[player] -= build.heavy*prices.heavy;
-				V(semaphoreID, sem);
-				int i;
 				for(i = build.heavy; i > 0; i--) {
 					sleep(3);
 					P(semaphoreID, sem);
@@ -343,15 +336,6 @@ void receiveBuild() {
 					V(semaphoreID, sem);
 					sendGameState(player, "Heavy warrior recruited\0");
 				}
-			}
-			else sendGameState(player, "Not enough resources to recruit\0");
-		}
-		else if(build.cavalry) {
-			if(build.cavalry*prices.cavalry <= state->resources[player]) {
-				P(semaphoreID, sem);
-				state->resources[player] -= build.cavalry*prices.cavalry;
-				V(semaphoreID, sem);
-				int i;
 				for(i = build.cavalry; i > 0; i--) {
 					sleep(5);
 					P(semaphoreID, sem);
@@ -359,25 +343,15 @@ void receiveBuild() {
 					V(semaphoreID, sem);
 					sendGameState(player, "Cavalryman recruited\0");
 				}
-			}
-			else sendGameState(player, "Not enough resources to recruit\0");
-		}
-		else if(build.workers) {
-			if(build.workers*prices.workers <= state->resources[player]) {
-				P(semaphoreID, sem);
-				state->resources[player] -= build.workers*prices.workers;
-				V(semaphoreID, sem);
-				int i;
 				for(i = build.workers; i > 0; i--) {
 					sleep(2);
 					P(semaphoreID, sem);
 					state->workers[player]++;
 					V(semaphoreID, sem);
 					sendGameState(player, "Worker recruited\0");
-				}
+				}			
 			}
 			else sendGameState(player, "Not enough resources to recruit\0");
-		}
 	}
 	exit(0);	
 }
