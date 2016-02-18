@@ -53,6 +53,7 @@ typedef struct QueueId {
 	int player2Q;
 } QueueId;
 
+int beatSkips[2];
 Price prices;
 AttackForce attackForce;
 DefenceForce defenceForce;
@@ -77,6 +78,7 @@ void initQueues();
 void initConnection();
 void waitingForPlayers();
 void initData();
+void heartbeat();
 void sendResources();
 void receiveBuild();
 void printBuild(Build build, int player);

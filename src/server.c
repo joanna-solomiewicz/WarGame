@@ -12,6 +12,7 @@ int main() {
 	initConnection();
 	waitingForPlayers();
 	initData();
+	heartbeat();
 
 	while(1) {
 		sendResources();
@@ -51,6 +52,8 @@ void initConsts() {
 	prices = setPrices();
 	attackForce = setAttackForce();
 	defenceForce = setDefenceForce();
+	beatSkips[0] = 0;
+	beatSkips[1] = 0;
 }
 
 void initStateMemory() {
@@ -93,12 +96,12 @@ void printGameState() {
 	printf(	"\n\t\t\t  WAR GAME STATE"
 				"\n\t\tP1\t\t\t\tP2"
 				"\n\t~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-				"\n\tlight:\t\t%d\t|\tlight:\t\t%d"
-				"\n\theavy:\t\t%d\t|\theavy:\t\t%d"
-				"\n\tcavalry:\t%d\t|\tcavalry:\t%d"
-				"\n\tworkers:\t%d\t|\tworkers:\t%d"
-				"\n\tpoints:\t\t%d\t|\tpoints:\t\t%d"
-				"\n\tresources:\t%d\t|\tresources:\t%d\n",
+				"\n\tlight\t\t%d\t|\tlight\t\t%d"
+				"\n\theavy\t\t%d\t|\theavy\t\t%d"
+				"\n\tcavalry\t\t%d\t|\tcavalry\t\t%d"
+				"\n\tworkers\t\t%d\t|\tworkers\t\t%d"
+				"\n\tpoints\t\t%d\t|\tpoints\t\t%d"
+				"\n\tresources\t%d\t|\tresources\t%d\n",
 				state->light[0], state->light[1], state->heavy[0], state->heavy[1], state->cavalry[0], state->cavalry[1], 
 				state->workers[0], state->workers[1], state->points[0], state->points[1], state->resources[0], state->resources[1]);
 }
@@ -226,12 +229,60 @@ void initData() {
 		state->workers[player] = 0;
 		state->points[player] = 0;
 		state->resources[player] = 300;
-		state->end = 'n';
+		state->end = 0;
 		
 		if(!player) sendGameState(player, "I'M PLAYER #1\0");
 		else sendGameState(player, "I'M PLAYER #2\0");
 	}
 	V(semaphoreID, sem);
+}
+
+void heartbeat() {
+
+	Alive alive;
+	int player;
+
+	int f = fork();
+	if(f == 0) player = 0;
+	else {
+		f = fork();
+		if(f == 0) player = 1;
+		else return;
+	}
+
+	while(1) {
+		sleep(2);
+
+		alive.mtype = 5;
+		alive.lol = 's';
+		int i,j;
+		int type = 4;
+		if(!player) {
+			i = msgsnd(queueIdList->player1Q, &alive, sizeof(alive.lol), IPC_NOWAIT);
+			if(i == -1) perror("msgsnd error");
+			j = msgrcv(queueIdList->player1Q, &alive, sizeof(alive.lol), type, IPC_NOWAIT);
+		}
+		else {
+			i = msgsnd(queueIdList->player2Q, &alive, sizeof(alive.lol), IPC_NOWAIT);
+			if(i == -1) perror("msgsnd error");
+			j = msgrcv(queueIdList->player2Q, &alive, sizeof(alive.lol), type, IPC_NOWAIT);
+		}
+
+		if(j == -1) beatSkips[player]++; 
+		else beatSkips[player] = 0; 
+
+		if(beatSkips[player] >= 3) { 
+			P(semaphoreID, sem);
+			state->end = '1';
+			V(semaphoreID, sem);
+			sendGameState(0, "END OF WAR\0");
+			sendGameState(1, "END OF WAR\0");
+			destruction();
+			int k = kill(0, SIGKILL);
+			if(k == -1) perror("kill error");
+			exit(0);
+		}
+	}
 }
 
 void sendResources() {

@@ -3,6 +3,8 @@
 int main() {
 
 	nonblock(NB_ENABLE);
+	
+	beatSkips = 0;
 
 	strcpy(status, "");
 	int l;
@@ -53,6 +55,7 @@ int main() {
 	clear();
 	printGameState(data);
 	printMenu();
+	heartbeat(id2);
 	while(1) {
 		char c;
 		if( kbhit() ) {
@@ -68,6 +71,9 @@ int main() {
 
 	nonblock(NB_DISABLE);
 }
+
+
+
 
 void clear() { printf("\033[H\033[J"); }
 
@@ -193,4 +199,29 @@ void update(Data data) {
 	printGameState(data);
 	printLog();
 	printMenu();
+}
+
+void heartbeat(int id2) {
+	int f = fork();
+	if(f != 0) return;
+
+	Alive alive;
+	while(1) {
+		sleep(2);
+
+		alive.mtype = 4;
+		alive.lol = 'k';
+		int i = msgsnd(id2, &alive, sizeof(alive.lol), IPC_NOWAIT);
+//		if(i == -1) perror("msgsnd error");
+
+		int type = 5;
+		i = msgrcv(id2, &alive, sizeof(alive.lol), type, IPC_NOWAIT);
+		if(i == -1) beatSkips++;
+
+		if(beatSkips >= 3) { 
+			int k = kill(0, SIGKILL);
+			if(k == -1) perror("kill error");
+			exit(0);
+		}
+	}
 }
