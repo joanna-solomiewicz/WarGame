@@ -27,3 +27,4 @@ void sendAttackMessage(Attack attack, int id2);
 void attacking(Data data, int id2);
 void update(Data data);
 void heartbeat(int id2);
+void warEnd(Data data);

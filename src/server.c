@@ -15,6 +15,7 @@ int main() {
 	heartbeat();
 
 	while(1) {
+		warEnd();
 		sendResources();
 		receiveBuild();
 		receiveAttack();
@@ -198,26 +199,27 @@ void waitingForPlayers() {
 void initData() {
 	/* Sending 300 entities of resources to players */
 	int player;
-	P(semaphoreID, sem);
 	for(player = 0; player < 2; player++) {
-		state->light[player] = 0;
-		state->heavy[player] = 0;
-		state->cavalry[player] = 0;
-		state->workers[player] = 0;
-		state->points[player] = 0;
-		state->resources[player] = 300;
+		P(semaphoreID, sem);
+		state->light[player] = 9;
+		state->heavy[player] = 9;
+		state->cavalry[player] = 9;
+		state->workers[player] = 9;
+		state->points[player] = 3;
+		state->resources[player] = 30000;
 		state->end = 0;
+		V(semaphoreID, sem);
 		
 		if(!player) sendGameState(player, "I'M PLAYER #1\0");
 		else sendGameState(player, "I'M PLAYER #2\0");
 	}
-	V(semaphoreID, sem);
 }
 
 void sendGameState(int player, char info[]) {
 	Data data;
 	if(!player) data.mtype = 1;
 	else data.mtype = 1;
+	P(semaphoreID, sem);
 	data.light = state->light[player];
 	data.heavy = state->heavy[player];
 	data.cavalry = state->cavalry[player];
@@ -226,6 +228,7 @@ void sendGameState(int player, char info[]) {
 	data.resources = state->resources[player];
 	strcpy(data.info, info);
 	data.end = state->end;
+	V(semaphoreID, sem);
 	
 	int i;
 	if(!player) i = msgsnd(queueIdList->player1Q, &data, sizeof(Data) - sizeof(data.mtype), IPC_NOWAIT);
@@ -278,6 +281,33 @@ void heartbeat() {
 			exit(0);
 		}
 	}
+}
+
+void warEnd() {
+	int player;
+	int enemy;
+	int f = fork();
+	if(f == 0) player = 0;
+	else {
+		f = fork();
+		if(f == 0) player = 1;
+		else return;
+	}
+	enemy = (player+1)%2;
+
+	if(state->points[player] == 5) {
+		P(semaphoreID, sem);
+		state->end = 'Y';
+		V(semaphoreID, sem);
+		sendGameState(player, "YOU'VE WON THE WAR\n");
+		sendGameState(enemy, "YOU'VE LOST THE WAR\n");
+		printf("\n\t\t\tTHE WAR HAS ENDED\n\n");
+		destruction();
+		int i = kill(0, SIGKILL);
+		if(i == -1) perror("kill error");
+		exit(0);
+	}
+	exit(0);
 }
 
 void sendResources() {

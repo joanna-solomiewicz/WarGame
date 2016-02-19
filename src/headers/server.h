@@ -79,6 +79,7 @@ void initConnection();
 void waitingForPlayers();
 void initData();
 void heartbeat();
+void warEnd();
 void sendResources();
 void receiveBuild();
 void receiveAttack();

@@ -61,9 +61,10 @@ int main() {
 			if(c == '1') building(data, id2);
 			else if(c == '2') attacking(data, id2);
 		}
-		usleep(1);
+//		usleep(1);
 		i = msgrcv(id2, &data, sizeof(Data) - sizeof(data.mtype), type, 0);
 		if(i != -1) {
+			warEnd(data);
 			updateLog(data);
 			update(data);
 		}
@@ -157,7 +158,7 @@ void building(Data data, int id2) {
 	}
 	sendBuildMessage(build, id2);
 	update(data);
-	usleep(1);
+//	usleep(1);
 }
 
 void sendAttackMessage(Attack attack, int id2) {
@@ -207,7 +208,7 @@ void attacking(Data data, int id2) {
 	}
 	sendAttackMessage(attack, id2);
 	update(data);
-	usleep(1);
+//	usleep(1);
 }
 
 void update(Data data) {
@@ -240,3 +241,15 @@ void heartbeat(int id2) {
 		}
 	}
 }
+
+void warEnd(Data data) {
+	if(data.end != 0) {
+		updateLog(data);
+		update(data);
+		printf("\n\tTHE WAR HAS ENDED\n\n");
+		int k = kill(0, SIGKILL);
+		if(k == -1) perror("kill error");
+		exit(0);
+	}
+}
+
