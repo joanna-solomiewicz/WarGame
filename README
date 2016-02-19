@@ -1,0 +1,18 @@
+Instrukcja kompilacji:
+	Aby skompilować projekt należy uruchomić skrypt o nazwie "compileScript".
+
+Instrukcja uruchomienia:
+	Aby uruchomić aplikację, która automatycznie rozpoczyna poprawną rozgrywkę można uruchomić skrypt "run", 
+	niestety jest on dostosowany do konkretnego terminala, dlatego drugą opcją jest uruchomienie plików wynikowych 
+	znajdujących się w folderze "out/". Uruchomienie serwera plikiem "server.out", a gracza plikiem "player.out".
+
+Opis zawartości plików:
+	W folderze "src/" znajdują się wszystkie pliki *.c.
+
+	-	Implementacja serwera znajduje się w pliku "server.c".
+
+	-	Implementacja gracza znajduje się w pliku "player.c" oraz "keyHandling.c". 
+		Plik "keyHandling.c" jest dodatkowym, który zawiera funkcje umożliwiające wpisywanie przez gracza komend 
+		bez konieczności potwierdzania ich klawiszem "Enter".
+
+
