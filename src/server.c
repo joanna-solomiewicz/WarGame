@@ -201,12 +201,12 @@ void initData() {
 	int player;
 	for(player = 0; player < 2; player++) {
 		P(semaphoreID, sem);
-		state->light[player] = 9;
-		state->heavy[player] = 9;
-		state->cavalry[player] = 9;
-		state->workers[player] = 9;
-		state->points[player] = 3;
-		state->resources[player] = 30000;
+		state->light[player] = 0;
+		state->heavy[player] = 0;
+		state->cavalry[player] = 0;
+		state->workers[player] = 0;
+		state->points[player] = 0;
+		state->resources[player] = 300;
 		state->end = 0;
 		V(semaphoreID, sem);
 		
