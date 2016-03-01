@@ -101,6 +101,7 @@ void sendBuildMessage(Build build, int id2) {
 	if(i == -1) perror("msgrcv error");
 }
 
+/* Previous building version */
 void building(Data data, int id2) { 
 	update(data);
 	printf("\n\t[1] LIGHT\n\t[2] HEAVY\n\t[3] CAVALRY\n\t[4] WORKERS\n\t[5] NOTHING, hit the wrong button\n");
