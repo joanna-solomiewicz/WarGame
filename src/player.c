@@ -104,61 +104,44 @@ void sendBuildMessage(Build build, int id2) {
 
 void building(Data data, int id2) { 
 	update(data);
-	Build build;
-	build.mtype = 2;
-	char ch;
+	printf("\n\t[1] LIGHT\n\t[2] HEAVY\n\t[3] CAVALRY\n\t[4] WORKERS\n\t[5] NOTHING, hit the wrong button\n");
 	int stop = 1;
-	printf("\n\t[E] I WANT TO EXIT, HIT THE WRONG BUTTON.\n");
-	printf("\tHOW MANY LIGHT WARRIORS? (0-9)\n");
 	while(stop) {
-		if(kbhit()) {
-			ch = getchar();
-			if(ch >= '0' && ch <= '9') {
-				build.light = (int)ch-48;
-				stop = 0;
+		char c;
+		c = getchar();
+		if( c >= '0' && c <= '4') {
+			printf("\n\tHOW MANY? (0-9)\n");
+			while(stop) {
+				if( kbhit() ) {
+					char ch = getchar();
+					if(ch >= '0' && ch <= '9') { 
+						Build build;
+						build.mtype = 2;
+						build.light = build.heavy = build.cavalry = build.workers = 0;
+						switch((int)c-48) {
+							case 1:
+								build.light = (int)ch-48;
+								break;
+							case 2:
+								build.heavy = (int)ch-48;
+								break;
+							case 3:
+								build.cavalry = (int)ch-48;
+								break;
+							case 4:
+								build.workers = (int)ch-48;
+								break;
+						}
+						sendBuildMessage(build, id2);
+						stop = 0; 
+					}
+				}
 			}
-			if(ch == 'e') return;
 		}
+		else if( c == '5' ) { stop = 0; }
+
+		update(data);
 	}
-	stop = 1;
-	printf("\tHOW MANY HEAVY WARRIORS? (0-9)\n");
-	while(stop) {
-		if(kbhit()) {
-			ch = getchar();
-			if(ch >= '0' && ch <= '9') {
-				build.heavy = (int)ch-48;
-				stop = 0;
-			}
-			if(ch == 'e') return;
-		}
-	}
-	stop = 1;
-	printf("\tHOW MANY CAVALRYMAN? (0-9)\n");
-	while(stop) {
-		if(kbhit()) {
-			ch = getchar();
-			if(ch >= '0' && ch <= '9') {
-				build.cavalry = (int)ch-48;
-				stop = 0;
-			}
-			if(ch == 'e') return;
-		}
-	}
-	stop = 1;
-	printf("\tHOW MANY WORKERS? (0-9)\n");
-	while(stop) {
-		if(kbhit()) {
-			ch = getchar();
-			if(ch >= '0' && ch <= '9') {
-				build.workers = (int)ch-48;
-				stop = 0;
-			}
-			if(ch == 'e') return;
-		}
-	}
-	sendBuildMessage(build, id2);
-	update(data);
-//	usleep(1);
 }
 
 void sendAttackMessage(Attack attack, int id2) {
